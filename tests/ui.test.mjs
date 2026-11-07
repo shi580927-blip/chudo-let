@@ -15,9 +15,11 @@ function el(id){
 globalThis.document={getElementById:el,querySelectorAll:()=>[]};
 await import("../src/app.mjs");
 const click=(dataset)=>el("activity").handlers.click({target:{closest:()=>({dataset})}});
-const setup=(focus)=>{
- el("focus").value=focus;el("generatorForm").handlers.submit({preventDefault(){}});
- return generateBundle({age:"5-6",theme:"clouds",count:7,seed:20261107,focus}).tasks[0];
+const setup=(focus,age="5-6")=>{
+ el("age").value=age;
+ el("focus").value=focus;
+ el("generatorForm").handlers.submit({preventDefault(){}});
+ return generateBundle({age,theme:"clouds",count:7,seed:20261107,focus}).tasks[0];
 };
 test("Незаконченное судоку просит заполнить клетки вместо сообщения об ошибке",()=>{
  const puzzle=setup("type:sudoku");
@@ -55,7 +57,7 @@ test("Карта: правильный итог маршрута выбран и
  assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
 });
 test("Шифр: незавершённое слово просит дописать, полное проверяется",()=>{
- const t=setup("type:cipher");
+ const t=setup("type:cipher","7-9");
  assert.match(el("activity").innerHTML,/cipher-key/);
  assert.doesNotMatch(el("activity").innerHTML,new RegExp(">"+t.answer+"<"));
  for(const letter of t.answer.slice(0,2))click({action:"cipherLetter",value:letter});
