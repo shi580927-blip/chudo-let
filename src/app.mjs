@@ -42,7 +42,7 @@ function board(t,print=false){
  if(t.kind==="pair")return '<p class="game-label">Подбери подходящую пару</p><div class="series"><span>'+t.target+'</span><span>+</span><span>?</span></div>'+pick(t.options);
  if(t.kind==="maze"){
   const path=Array.isArray(state.answer)?state.answer:[0],at=path.at(-1),possible=neighbors(t,at),last=at===t.size*t.size-1;
-  return mazeSvg(t,print)+(print?'':'<p class="game-label">'+(last?'Ты добрался до звезды!':'Нажимай на соседние клетки без стены между ними.')+'</p><div class="maze-actions">'+possible.map(n=>'<button class="ghost" data-action="move" data-cell="'+n+'">Перейти '+(["↗","→","↘","↓","↙","←","↖","↑"][0]||'')+' · '+(n+1)+'</button>').join("")+'</div>');
+  return mazeSvg(t,print)+(print?'':'<p class="game-label">'+(last?'Ты добрался до звезды!':'Нажимай на соседние клетки без стены между ними.')+'</p><div class="maze-actions">'+possible.map(n=>'<button class="ghost" data-action="move" data-cell="'+n+'">Перейти '+(n===at+1?"→":n===at-1?"←":n===at+t.size?"↓":"↑")+' · '+(n+1)+'</button>').join("")+'</div>');
  }
  if(t.kind==="compare")return '<div class="compare-board"><div class="compare-group">'+Array(t.left).fill(t.icon).join(' ')+'</div><span class="compare-sign">?</span><div class="compare-group">'+Array(t.right).fill(t.icon).join(' ')+'</div></div>'+pick(t.options);
  if(t.kind==="story")return '<div class="story-options">'+t.cards.map((c,i)=>{
