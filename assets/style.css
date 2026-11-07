@@ -198,3 +198,84 @@ button.diff-cell:hover,button.diff-cell:focus-visible{border-color:#7951cf;outli
  .print-task .crossword-clue-icon{font-size:25pt}
  .print-task:has(.crossword-grid){break-before:page;page-break-before:always}
 }
+
+/* v0.2 — пазл из цельной сцены с SVG viewBox, симметрия и логический рюкзак */
+.picture-layout{display:grid;grid-template-columns:minmax(120px,0.62fr) minmax(0,1fr);align-items:start;gap:17px;max-width:700px;margin:10px auto 16px}
+.picture-reference,.picture-work{min-width:0}
+.picture-reference>.picture-art{max-width:190px;margin:8px auto;border:3px solid #dbc9ed;border-radius:17px}
+.picture-reference .game-label,.picture-work .game-label{text-align:center}
+.picture-art{display:block;width:100%;height:auto;aspect-ratio:1;overflow:hidden}
+.picture-board,.picture-tray{display:grid;grid-template-columns:repeat(var(--piece-cols),minmax(0,1fr));gap:4px;width:min(100%,365px);margin:auto;padding:5px;border:2px solid #bfa4e5;border-radius:15px;background:#f0e9fa}
+.picture-slot,.picture-piece{padding:0;display:flex;align-items:center;justify-content:center;aspect-ratio:1;min-width:0;border:2px solid #ded3ef;border-radius:9px;background:#fff;color:#7555aa;overflow:hidden}
+button.picture-slot,button.picture-piece{cursor:pointer}
+.picture-slot.filled{border-color:#b3d3a0}
+.picture-slot.active{outline:3px solid #8cae55;outline-offset:-3px;background:#f3ffd8}
+.picture-piece.used{opacity:.3;cursor:default}
+.picture-empty{font-size:40px;line-height:1;color:#d6c6e9}
+.picture-tray{margin:10px auto 14px;max-width:365px}
+.picture-slot .picture-art,.picture-piece .picture-art{width:100%;height:100%}
+.mirror-example{display:flex;align-items:stretch;justify-content:center;gap:5px;margin:12px auto 22px;width:min(100%,520px)}
+.mirror-divider{width:5px;border-radius:5px;background:#ad83d8;flex:0 0 5px}
+.mirror-half{display:grid;grid-template-columns:repeat(var(--mirror-cols),minmax(0,1fr));gap:2px;max-width:100%;flex:1 1 0}
+.mirror-cell{min-width:0;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #dfd2f2;border-radius:7px;font-size:clamp(24px,2.7vw,36px);line-height:1}
+.mirror-question{color:#c3b4db;font-size:23px}
+.mirror-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 auto;max-width:740px}
+.mirror-option{min-width:0;padding:12px 9px;background:#fffdf7;border:2px solid #ddcfee;border-radius:16px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:9px}
+.mirror-option-label{font-size:13px;font-weight:800;color:#70519a}
+.mirror-option .mirror-half{width:min(100%,150px);flex:none}
+.mirror-option .mirror-cell{font-size:clamp(17px,1.75vw,25px);border-radius:5px}
+.mirror-option.selected{border-color:#7046b5;box-shadow:inset 0 0 0 2px #ded1fc;background:#f5efff}
+.pack-conditions{padding:13px 15px;border:1px solid #ddd1ef;background:#fff9e5;border-radius:15px;font-size:15px;line-height:1.5;margin:8px auto 16px;max-width:780px}
+.pack-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;max-width:790px;margin:0 auto 14px}
+.pack-item{position:relative;min-width:0;min-height:171px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:7px;justify-content:center;border-radius:18px;border:2px solid #dfd4ef;background:linear-gradient(155deg,#fff,#f9f5ff);cursor:pointer}
+.pack-item-icon{font-size:61px;line-height:1}
+.pack-item-label{font-size:12px;color:#695b89;text-align:center;min-height:20px}
+.pack-weight{display:flex;gap:3px;align-items:center;justify-content:center}
+.pack-pip{display:block;width:10px;height:10px;border-radius:50%;background:#e0a549;border:1px solid #bc8536}
+.pack-stamp{position:absolute;right:9px;top:7px;min-width:24px;min-height:23px;font-size:21px;line-height:1}
+.pack-mark,.pack-box{position:absolute;left:9px;top:7px;display:flex;align-items:center;justify-content:center;width:24px;height:24px;border:2px solid #a391c9;border-radius:7px;background:#fff;color:#6747a5;font-weight:850;font-size:19px}
+.pack-item.selected{background:#eff8d9;border-color:#80aa62;box-shadow:inset 0 0 0 2px #cde8b7}
+.pack-item.selected .pack-mark{background:#85b361;color:#fff;border-color:#729a4e}
+@media(max-width:760px){
+ .picture-layout{gap:9px;grid-template-columns:minmax(105px,0.58fr) minmax(0,1fr)}
+ .picture-reference>.picture-art{max-width:170px}
+ .picture-board,.picture-tray{gap:3px;padding:3px}
+ .mirror-cell{font-size:clamp(22px,6vw,34px)}
+ .mirror-options{grid-template-columns:1fr;gap:8px}
+ .mirror-option{min-height:110px;flex-direction:row;justify-content:space-around}
+ .mirror-option .mirror-half{width:min(55%,170px)}
+ .mirror-option .mirror-cell{font-size:clamp(19px,5vw,29px)}
+ .pack-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .pack-item{min-height:150px;padding:9px 6px}
+ .pack-item-icon{font-size:52px}
+ .pack-conditions{font-size:14px}
+}
+@media(max-width:400px){
+ .picture-layout{grid-template-columns:1fr}
+ .picture-reference>.picture-art{max-width:145px}
+ .mirror-example{gap:3px}.mirror-divider{width:3px;flex-basis:3px}
+ .mirror-cell{font-size:clamp(19px,6vw,29px);border-radius:4px}
+ .mirror-option{padding:8px}
+ .pack-item-icon{font-size:46px}
+ .pack-item-label{font-size:10px}
+}
+@media print{
+ .print-task .picture-layout{display:grid;grid-template-columns:1fr 1fr;max-width:160mm;gap:5mm}
+ .print-task .picture-reference>.picture-art{max-width:54mm}
+ .print-task .picture-board,.print-task .picture-tray{max-width:74mm;gap:.8mm;padding:1mm;border:1px solid #bbb}
+ .print-task .picture-slot,.print-task .picture-piece{border:1px solid #bbb;border-radius:1mm}
+ .print-task .picture-empty{font-size:24pt}
+ .print-task:has(.picture-board){break-before:page;page-break-before:always}
+ .print-task .mirror-example{max-width:135mm}
+ .print-task .mirror-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:2mm}
+ .print-task .mirror-option{flex-direction:column;padding:2mm;min-height:0;border:1px solid #bbb}
+ .print-task .mirror-option .mirror-half{width:100%}
+ .print-task .mirror-cell{font-size:18pt;background:#fff;border:1px solid #bbb}
+ .print-task .mirror-question{font-size:14pt}
+ .print-task .pack-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:2mm}
+ .print-task .pack-item{min-height:35mm;border:1px solid #888;background:#fff;padding:2mm}
+ .print-task .pack-item-icon{font-size:32pt}
+ .print-task .pack-item-label{font-size:9pt}
+ .print-task .pack-conditions{background:#fff;border:1px solid #bbb}
+ .print-task .pack-pip{background:#aaa;border:1px solid #555}
+}
