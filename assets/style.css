@@ -60,7 +60,7 @@ button.diff-cell:hover,button.diff-cell:focus-visible{border-color:#7951cf;outli
 .memory-print .memory-tile{width:58px;height:58px;font-size:36px}
 .memory-print .memory-cards{gap:6px}
 .logic-table{max-width:565px;margin:8px auto 25px;border-radius:16px;overflow:hidden;border:2px solid #decff1}
-.logic-table-row{display:grid;grid-template-columns:repeat(calc(var(--logic-n) + 1),minmax(0,1fr))}
+.logic-table-row{display:grid;grid-template-columns:repeat(var(--logic-cols),minmax(0,1fr))}
 .logic-head,.logic-table-cell{min-width:0;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(22px,3vw,39px);background:#fff;border:1px solid #e8e0f1;line-height:1}
 .logic-head{background:#efe9ff}.logic-head.corner{font-size:24px}
 .logic-table-cell{gap:0}.logic-table-cell span{font-size:.72em}.logic-table-cell.missing{background:#fdf0cb;color:#68459c;font-weight:900;font-size:43px}
