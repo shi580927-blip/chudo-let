@@ -163,3 +163,37 @@ test("Печать: после сборки слова детские клето
  assert.match(worksheet,/class="word-slot">＿<\/span>/);
  assert.doesNotMatch(worksheet,new RegExp('class="word-slot">'+t.answer[0]));
 });
+
+test("Пазл: помещаем каждый фрагмент, завершаем, затем печатаем пустое поле",()=>{
+ const t=setup("type:puzzle","5-6");
+ assert.match(el("activity").innerHTML,/picture-tray/);
+ const n=t.size*t.size;
+ for(let i=0;i<n;i++){
+  click({action:"puzzleSlot",cell:String(i)});
+  click({action:"puzzlePiece",piece:String(i)});
+ }
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+ globalThis.requestAnimationFrame=cb=>cb();globalThis.window={print(){}};
+ el("printBtn").handlers.click();
+ const page=el("printRoot").innerHTML.split('<section class="answer-heading">')[0];
+ assert.match(page,/picture-empty/);
+});
+test("Зеркальная половинка: выбор точного отражения проходит проверку",()=>{
+ const t=setup("type:symmetry","5-6");
+ assert.match(el("activity").innerHTML,/mirror-options/);
+ click({action:"mirrorChoose",value:String(t.answer)});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});
+test("Волшебный рюкзак: недостаточно предметов — не ошибка, полный ответ верный",()=>{
+ const t=setup("type:backpack","7-9");
+ assert.match(el("activity").innerHTML,/pack-grid/);
+ click({action:"packToggle",value:String(t.answer[0])});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Закончите|Сначала|выбери|Выбери|необходимо|Добавь/);
+ assert.doesNotMatch(el("activity").innerHTML,/Не совсем/);
+ for(const idx of t.answer.slice(1))click({action:"packToggle",value:String(idx)});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});

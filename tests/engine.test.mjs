@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer,countSudokuSolutions,validSudokuSolution,traceMap,validateCrossword} from "../src/engine.mjs";
 import {WORD_BANK} from "../src/words.mjs";
-test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,20);});
+import {backpackSolutions,mirrorRight} from "../src/spatial.mjs";
+test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,23);});
 test("Генераторы всех тем и возрастов гарантированно корректны",()=>{
  for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(const kind of READY_IDS)for(let seed=0;seed<30;seed++){
   const t=makeTask(kind,age,theme,seed);
@@ -15,7 +16,7 @@ test("Одинаковые параметры порождают одинако�
  const a=generateBundle({seed:42,count:20}),b=generateBundle({seed:42,count:20});
  assert.deepEqual(a,b);
 });
-test("В неготовую механику попасть нельзя",()=>assert.throws(()=>makeTask("puzzle"),/ещё не готов/));
+test("В неготовую механику попасть нельзя",()=>assert.throws(()=>makeTask("tangram"),/ещё не готов/));
 test("Ошибочные ответы отбрасываются",()=>{
  const m=makeTask("maze","7-9","clouds",10);assert.equal(checkAnswer(m,[0,m.size*m.size-1]),false);
  const s=makeTask("sort","5-6","forest",15);assert.equal(checkAnswer(s,s.items.map(x=>1-x.group)),false);
@@ -249,5 +250,49 @@ test("Речевые наборы не дублируют слова у сосе
   const b=generateBundle({age:"7-9",theme,count:20,focus:"story",seed:42});
   const words=b.tasks.filter(t=>t.kind==="word"||t.kind==="syllables").map(t=>t.answer);
   for(let i=1;i<words.length;i++)assert.notEqual(words[i],words[i-1],theme);
+ }
+});
+
+test("Пазл: перемешаны все кусочки без потерь и ответ — точный порядок",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<65;seed++){
+  const t=makeTask("puzzle",age,theme,seed);
+  assert.equal(validateTask(t),true);
+  assert.equal(new Set(t.pieces).size,t.size*t.size);
+  assert.notDeepEqual(t.pieces,t.answer);
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,t.pieces),false);
+  assert.equal(checkAnswer(t,t.answer.slice(0,-1)),false);
+ }
+});
+test("Зеркальная половинка: правильный вариант — точная горизонтальная симметрия",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<65;seed++){
+  const t=makeTask("symmetry",age,theme,seed),mirror=mirrorRight(t.left,t.rows,t.halfCols);
+  assert.equal(validateTask(t),true);
+  assert.deepEqual(t.options[t.answer],mirror);
+  assert.equal(t.options.filter(a=>JSON.stringify(a)===JSON.stringify(mirror)).length,1);
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,(t.answer+1)%3),false);
+ }
+});
+test("Волшебный рюкзак: единственное решение удовлетворяет ВСЕМ ограничениям",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<65;seed++){
+  const t=makeTask("backpack",age,theme,seed),sols=backpackSolutions(t);
+  assert.equal(validateTask(t),true);
+  assert.equal(sols.length,1,JSON.stringify({theme,age,seed}));
+  assert.deepEqual(sols[0],t.answer);
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,t.answer.slice(0,-1)),false);
+  assert.equal(checkAnswer(t,[...t.answer,t.answer[0]]),false);
+  assert.equal(validateTask({...t,totalWeight:t.totalWeight+99}),false);
+ }
+});
+test("Механики доступны лишь в подходящем возрастном диапазоне",()=>{
+ assert.throws(()=>generateBundle({age:"3-4",focus:"type:symmetry"}),/возрасту/);
+ assert.throws(()=>generateBundle({age:"3-4",focus:"type:backpack"}),/возрасту/);
+ for(const kind of ["puzzle","symmetry","backpack"]){
+  const age=kind==="puzzle"?"3-4":"5-6";
+  const bundle=generateBundle({age,theme:"forest",focus:"type:"+kind,count:12,seed:210});
+  assert.equal(bundle.tasks.length,12);
+  assert.ok(bundle.tasks.every(t=>t.kind===kind&&validateTask(t)));
  }
 });
