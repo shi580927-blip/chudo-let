@@ -1,7 +1,7 @@
 import {CATALOG,THEMES,generateBundle,checkAnswer,solutionText,neighbors,solveMaze} from "./engine.mjs";
 import {renderSymbol} from "./artwork.mjs";
 const $=id=>document.getElementById(id);
-const state={bundle:generateBundle(),index:0,answer:null,checked:false,hint:false,done:new Set(),view:"builder"};
+const state={bundle:generateBundle(),index:0,answer:null,checked:false,hint:false,done:new Set(),view:"builder",phase:"observe",activeCell:null};
 const escapeHtml=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const draw=(symbol,theme=state.bundle.theme)=>renderSymbol(symbol,theme);
 /** Поднимаем искомый предмет до размера отдельной иллюстрации, включая телефон и печать. */
@@ -19,7 +19,7 @@ function promptHTML(t){
  return text;
 }
 function task(){return state.bundle.tasks[state.index];}
-function reset(){state.answer=null;state.checked=false;state.hint=false;}
+function reset(){state.answer=null;state.checked=false;state.hint=false;state.phase="observe";state.activeCell=null;}
 function emojiGrid(arr,compact=false,theme=state.bundle.theme){
  return '<div class="emoji-grid'+(compact?' compact':'')+'">'+arr.map(x=>'<div class="emoji-tile">'+draw(x,theme)+'</div>').join("")+'</div>';
 }
@@ -45,6 +45,34 @@ function mazeSvg(t,print=false){
 }
 function board(t,print=false){
  const pick=(opts)=>pickButtons(opts,print,t.theme);
+ if(t.kind==="memory"){
+  const observe=!print&&state.phase!=="answer";
+  const cards=cells=>'<div class="memory-cards">'+cells.map(icon=>'<div class="memory-tile">'+(icon===null?'<span class="memory-empty">?</span>':draw(icon,t.theme))+'</div>').join("")+'</div>';
+  if(print)return '<div class="memory-print"><div><p class="game-label">Было</p>'+cards(t.base)+'</div><div><p class="game-label">Стало</p>'+cards(t.changed)+'</div></div><p class="game-label">Напиши, что исчезло: _____________________</p>';
+  if(observe)return '<div class="game-label">Рассмотри все предметы и постарайся запомнить</div>'+cards(t.base)+'<div class="game-actions"><button class="primary" data-action="memoryReveal">Я запомнил! Показать изменения →</button></div>';
+  return '<div class="game-label">Какой предмет пропал?</div>'+cards(t.changed)+pick(t.options);
+ }
+ if(t.kind==="table"){
+  const n=t.rows.length;
+  const top='<div class="logic-table-row"><div class="logic-head corner">↘</div>'+t.columns.map(icon=>'<div class="logic-head">'+draw(icon,t.theme)+'</div>').join("")+'</div>';
+  const rest=t.rows.map((r,ri)=>'<div class="logic-table-row"><div class="logic-head">'+draw(r,t.theme)+'</div>'+t.columns.map((c,ci)=>{
+   const missing=ri===t.missing[0]&&ci===t.missing[1];
+   return '<div class="logic-table-cell'+(missing?' missing':'')+'">'+(missing?'?':'<span>'+draw(r,t.theme)+'</span><span>'+draw(c,t.theme)+'</span>')+'</div>';
+  }).join("")+'</div>').join("");
+  const options='<div class="table-options">'+t.options.map((pair,i)=>'<button type="button" class="table-option'+(!print&&state.answer===i?' selected':'')+'"'+(print?' tabindex="-1"':' data-action="pickTable" data-value="'+i+'"')+'><span>'+draw(pair[0],t.theme)+'</span><b>+</b><span>'+draw(pair[1],t.theme)+'</span></button>').join("")+'</div>';
+  return '<div class="logic-table" style="--logic-n:'+n+'">'+top+rest+'</div><p class="game-label">Какая пара должна стоять вместо вопроса?</p>'+options;
+ }
+ if(t.kind==="sudoku"){
+  const values=Array.isArray(state.answer)?state.answer:t.grid;
+  const selected=state.activeCell;
+  const cells=t.grid.map((given,i)=>{
+   const editable=given===null,tag=editable&&!print?"button":"div";
+   const value=values[i],symbol=value===null?"":draw(t.symbols[value],t.theme);
+   return '<'+tag+(tag==="button"?' type="button" data-action="sudokuCell" data-cell="'+i+'"':'')+' class="sudoku-cell'+(editable?' editable':'')+(selected===i&&!print?' active':'')+'"'+(tag==="button"?' aria-label="Клетка '+(Math.floor(i/4)+1)+'-'+(i%4+1)+'"':'')+'>'+symbol+'</'+tag+'>';
+  }).join("");
+  const palette=print?'':'<div class="sudoku-palette"><p>Сначала выбери пустую клетку, затем значок:</p><div class="choice-row">'+t.symbols.map((sym,i)=>'<button class="pick" type="button" data-action="sudokuValue" data-value="'+i+'"'+(selected===null?' disabled':'')+'>'+draw(sym,t.theme)+'</button>').join("")+'<button class="ghost" type="button" data-action="sudokuValue" data-value="-1"'+(selected===null?' disabled':'')+'>Стереть</button></div></div>';
+  return '<div class="sudoku-grid">'+cells+'</div>'+palette;
+ }
  if(t.kind==="differences"){
   const selected=Array.isArray(state.answer)?state.answer:[];
   const panel=(cells,second)=>{
@@ -82,7 +110,7 @@ function board(t,print=false){
  return "<p>Механика пока не поддерживается.</p>";
 }
 function hintFor(t){
- switch(t.kind){case"differences":return"Сравни предметы в одинаковых клетках обеих картинок — начни с верхнего ряда.";case"find":case"count":return"Посмотри на каждую строчку слева направо и отмечай найденные значки.";case"odd":return"Пять картинок можно объединить в одну группу, а одну — нет.";case"shadow":return"Сравни общий контур, а не цвет.";case"sequence":return"Посмотри, через сколько шагов повторяется рисунок.";case"sort":return"Названия корзин помогут понять общее свойство.";case"pair":return"Подумай, что обычно используется вместе.";case"maze":return"Из каждой клетки можно перейти только туда, где нет стенки.";case"compare":return"Сосчитай предметы с каждой стороны.";case"story":return"Что произошло сначала, а что могло случиться только потом?";default:return"Посмотри внимательно на условие.";}
+ switch(t.kind){case"memory":return"Запомни все значки и их места, затем нажми кнопку и найди исчезнувший.";case"table":return"Сравни нужную строку и столбец: на пересечении должны быть оба значка.";case"sudoku":return"В каждой строке, столбце и квадрате 2×2 значки не повторяются.";case"differences":return"Сравни предметы в одинаковых клетках обеих картинок — начни с верхнего ряда.";case"find":case"count":return"Посмотри на каждую строчку слева направо и отмечай найденные значки.";case"odd":return"Пять картинок можно объединить в одну группу, а одну — нет.";case"shadow":return"Сравни общий контур, а не цвет.";case"sequence":return"Посмотри, через сколько шагов повторяется рисунок.";case"sort":return"Названия корзин помогут понять общее свойство.";case"pair":return"Подумай, что обычно используется вместе.";case"maze":return"Из каждой клетки можно перейти только туда, где нет стенки.";case"compare":return"Сосчитай предметы с каждой стороны.";case"story":return"Что произошло сначала, а что могло случиться только потом?";default:return"Посмотри внимательно на условие.";}
 }
 function renderNav(){
  $("taskNav").innerHTML=state.bundle.tasks.map((t,i)=>'<button class="task-pill'+(i===state.index?' active':'')+(state.done.has(i)?' done':'')+'" data-task="'+i+'" title="'+escapeHtml(t.title)+'" aria-label="Задание '+(i+1)+'">'+(i+1)+'</button>').join("");
@@ -110,6 +138,18 @@ function tryMove(cell){
 $("activity").addEventListener("click",event=>{
  const target=event.target.closest("[data-action]");if(!target)return;
  const action=target.dataset.action,t=task();
+ if(action==="memoryReveal"&&t.kind==="memory"){state.phase="answer";state.answer=null;state.checked=false;}
+ if(action==="pickTable"&&t.kind==="table"){state.answer=Number(target.dataset.value);state.checked=false;}
+ if(action==="sudokuCell"&&t.kind==="sudoku"){
+  const n=Number(target.dataset.cell);
+  if(t.grid[n]===null)state.activeCell=n;
+ }
+ if(action==="sudokuValue"&&t.kind==="sudoku"&&state.activeCell!==null){
+  const n=Number(target.dataset.value);
+  const values=Array.isArray(state.answer)?state.answer.slice():t.grid.slice();
+  values[state.activeCell]=n===-1?null:n;
+  state.answer=values;state.checked=false;
+ }
  if(action==="difference"){
   const n=Number(target.dataset.cell),prev=Array.isArray(state.answer)?state.answer:[];
   state.answer=prev.includes(n)?prev.filter(x=>x!==n):[...prev,n];

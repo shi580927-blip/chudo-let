@@ -16,7 +16,7 @@ export const CATALOG = [
  ["phrase","Закончи фразу","Речь",5],["cipher","Секретный шифр","Приключения",6],
  ["backpack","Волшебный рюкзак","Приключения",4],["detective","Маленький детектив","Приключения",6],
  ["branching","Приключение с выбором","Приключения",5],["team","Командная миссия","Приключения",6]
-].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","odd","sequence","sort","pair","maze","count","compare","story"].includes(id)}));
+].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","count","compare","story"].includes(id)}));
 
 export const THEMES = {
  clouds:{name:"Облачная почта",icon:"☁️",a:["✉️","📦","🪁","🧭","🔔","🗝️"],b:["🌈","⭐","☁️","🌙","☀️","⚡"],labels:["Почтовые находки","Небесные чудеса"]},
@@ -107,9 +107,89 @@ function maze(size,r,branching=false){
  return {...result,routeCount:2};
 }
 
+// Полный набор 4x4: в каждой строке, колонке и квадрате 2x2 все 4 символа по одному разу.
+export function validSudokuSolution(s){
+ if(!Array.isArray(s)||s.length!==16||!s.every(n=>Number.isInteger(n)&&n>=0&&n<4))return false;
+ const correct=a=>new Set(a).size===4;
+ for(let k=0;k<4;k++){
+  if(!correct(s.slice(k*4,k*4+4)))return false;
+  if(!correct([0,1,2,3].map(r=>s[r*4+k])))return false;
+ }
+ for(let r=0;r<4;r+=2)for(let c=0;c<4;c+=2){
+  if(!correct([s[r*4+c],s[r*4+c+1],s[(r+1)*4+c],s[(r+1)*4+c+1]]))return false;
+ }
+ return true;
+}
+export function countSudokuSolutions(grid,limit=2){
+ if(!Array.isArray(grid)||grid.length!==16||!grid.every(n=>n===null||(Number.isInteger(n)&&n>=0&&n<4)))return 0;
+ const work=grid.slice();
+ const candidates=(idx)=>{
+  const row=Math.floor(idx/4),col=idx%4,used=new Set();
+  for(let n=0;n<4;n++){used.add(work[row*4+n]);used.add(work[n*4+col]);}
+  const r0=Math.floor(row/2)*2,c0=Math.floor(col/2)*2;
+  for(let y=0;y<2;y++)for(let x=0;x<2;x++)used.add(work[(r0+y)*4+c0+x]);
+  return [0,1,2,3].filter(x=>!used.has(x));
+ };
+ // Неправильные подсказки не должны трактоваться как исходное допустимое поле.
+ for(let i=0;i<16;i++)if(work[i]!==null){
+  const v=work[i];work[i]=null;const ok=candidates(i).includes(v);work[i]=v;
+  if(!ok)return 0;
+ }
+ let count=0;
+ const search=()=>{
+  if(count>=limit)return;
+  let best=-1,bestOpts=null;
+  for(let i=0;i<16;i++)if(work[i]===null){
+   const opts=candidates(i);
+   if(opts.length===0)return;
+   if(bestOpts===null||opts.length<bestOpts.length){best=i;bestOpts=opts;}
+  }
+  if(best===-1){count++;return;}
+  for(const n of bestOpts){
+   work[best]=n;search();work[best]=null;if(count>=limit)return;
+  }
+ };
+ search();return count;
+}
+function makeSudoku(r,combined,age){
+ const groups=shuffle([0,1],r);
+ const rowOrder=groups.flatMap(b=>shuffle([b*2,b*2+1],r));
+ const colOrder=shuffle([0,1],r).flatMap(b=>shuffle([b*2,b*2+1],r));
+ const digits=shuffle([0,1,2,3],r);
+ const canonical=(row,col)=>(row*2+Math.floor(row/2)+col)%4;
+ const solution=Array.from({length:16},(_,i)=>digits[canonical(rowOrder[Math.floor(i/4)],colOrder[i%4])]);
+ const grid=solution.slice(),symbols=shuffleUnique(combined,r,4);
+ const blanksGoal=age<=5?5:age<=7?7:8;
+ for(const pos of shuffle(Array.from({length:16},(_,i)=>i),r)){
+  if(grid.filter(n=>n===null).length>=blanksGoal)break;
+  const previous=grid[pos];grid[pos]=null;
+  if(countSudokuSolutions(grid)!==1)grid[pos]=previous;
+ }
+ return {size:4,symbols,grid,solution,blankCount:grid.filter(n=>n===null).length};
+}
+
 function taskFor(kind,age,theme,r){
  const t=THEMES[theme]||THEMES.clouds,combined=[...t.a,...t.b],short=age<=3;
  let q={kind,title:CATALOG.find(e=>e.id===kind)?.name??kind,theme,age};
+ if(kind==="memory"){
+  const base=shuffleUnique(combined,r,age<=5?4:6);
+  const missing=integer(r,base.length),changed=base.slice();
+  changed[missing]=null;
+  return {...q,prompt:"Запомни предметы. Затем узнай, какой предмет исчез.",base,changed,position:missing,answer:base[missing],options:shuffle(base,r)};
+ }
+ if(kind==="table"){
+  const n=age>=10?4:3,rows=shuffleUnique(t.a,r,n),columns=shuffleUnique(t.b,r,n);
+  const row=integer(r,n),col=integer(r,n);
+  const candidates=[];
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++)candidates.push([rows[y],columns[x]]);
+  const correct=rows[row]+"|"+columns[col];
+  const other=shuffle(candidates.filter(x=>x.join("|")!==correct),r).slice(0,3);
+  const options=shuffle([[rows[row],columns[col]],...other],r);
+  return {...q,prompt:"Найди недостающую пару по строке и столбцу.",rows,columns,missing:[row,col],options,answer:options.findIndex(x=>x.join("|")===correct)};
+ }
+ if(kind==="sudoku"){
+  return {...q,prompt:"Заполни пустые клетки. Каждый значок должен встречаться один раз в строке, столбце и квадрате 2×2.",...makeSudoku(r,combined,age)};
+ }
  if(kind==="differences"){
   const cols=short?3:age<=5?4:5,rows=short?3:age<=7?4:5;
   const base=Array.from({length:cols*rows},()=>pick(combined,r));
@@ -165,6 +245,26 @@ export function makeTask(kind,age="5-6",theme="clouds",seed=1){
 }
 export function validateTask(t){
  if(!t||!READY_IDS.includes(t.kind))return false;
+ if(t.kind==="memory"){
+  if(!Array.isArray(t.base)||!Array.isArray(t.changed)||!Array.isArray(t.options)||t.base.length<4||t.base.length!==t.changed.length)return false;
+  if(new Set(t.base).size!==t.base.length||new Set(t.options).size!==t.options.length||t.options.length!==t.base.length)return false;
+  const missing=t.base.flatMap((x,i)=>x!==t.changed[i]?[i]:[]);
+  return missing.length===1&&missing[0]===t.position&&t.changed[t.position]===null&&t.answer===t.base[t.position]&&t.options.includes(t.answer)&&t.options.every(x=>t.base.includes(x));
+ }
+ if(t.kind==="table"){
+  if(!Array.isArray(t.rows)||!Array.isArray(t.columns)||!Array.isArray(t.options)||!Array.isArray(t.missing))return false;
+  const [row,col]=t.missing,n=t.rows.length;
+  if(n<3||n>4||t.columns.length!==n||new Set(t.rows).size!==n||new Set(t.columns).size!==n)return false;
+  if(!Number.isInteger(row)||!Number.isInteger(col)||row<0||col<0||row>=n||col>=n)return false;
+  if(t.options.length!==4||new Set(t.options.map(x=>x.join("|"))).size!==4||!Number.isInteger(t.answer)||t.answer<0||t.answer>=4)return false;
+  return t.options.every(x=>x.length===2&&t.rows.includes(x[0])&&t.columns.includes(x[1]))&&t.options[t.answer][0]===t.rows[row]&&t.options[t.answer][1]===t.columns[col];
+ }
+ if(t.kind==="sudoku"){
+  if(t.size!==4||!Array.isArray(t.symbols)||new Set(t.symbols).size!==4||!Array.isArray(t.grid)||t.grid.length!==16)return false;
+  if(!validSudokuSolution(t.solution)||t.grid.some((v,i)=>v!==null&&v!==t.solution[i]))return false;
+  const blanks=t.grid.filter(v=>v===null).length;
+  return blanks>=4&&blanks===t.blankCount&&countSudokuSolutions(t.grid)===1;
+ }
  if(t.kind==="differences"){
   if(!Array.isArray(t.base)||!Array.isArray(t.changed)||!Array.isArray(t.answer)||!Number.isInteger(t.cols)||!Number.isInteger(t.rows))return false;
   const expected=t.cols*t.rows;
@@ -187,6 +287,9 @@ export function validateTask(t){
  return false;
 }
 export function checkAnswer(t,value){
+ if(t.kind==="memory")return value===t.answer;
+ if(t.kind==="table")return Number.isInteger(value)&&value===t.answer;
+ if(t.kind==="sudoku")return Array.isArray(value)&&value.length===16&&value.every((v,i)=>v===t.solution[i]);
  if(t.kind==="differences")return Array.isArray(value)&&value.length===t.answer.length&&new Set(value).size===value.length&&value.every(v=>t.answer.includes(v));
  if(t.kind==="sort")return Array.isArray(value)&&value.length===t.items.length&&value.every((x,i)=>x===t.items[i].group);
  if(t.kind==="maze")return Array.isArray(value)&&value[0]===0&&value.at(-1)===t.size*t.size-1&&value.every((cell,i)=>i===0||neighbors(t,value[i-1]).includes(cell));
@@ -194,6 +297,9 @@ export function checkAnswer(t,value){
  return String(value)===String(t.answer);
 }
 export function solutionText(t){
+ if(t.kind==="memory")return "Исчез: "+t.answer+" (позиция "+(t.position+1)+")";
+ if(t.kind==="table")return "Пара: "+t.rows[t.missing[0]]+" + "+t.columns[t.missing[1]];
+ if(t.kind==="sudoku")return [0,1,2,3].map(row=>t.solution.slice(row*4,row*4+4).map(n=>t.symbols[n]).join(" ")).join(" / ");
  if(t.kind==="differences")return t.answer.map(i=>"строка "+(Math.floor(i/t.cols)+1)+", столбец "+(i%t.cols+1)).join("; ");
  if(t.kind==="maze")return "Возможных маршрутов: "+t.routeCount+". Пример: "+solveMaze(t).map(n=>"("+((n%t.size)+1)+","+Math.floor(n/t.size+1)+")").join(" → ");
  if(t.kind==="sort")return t.items.map(i=>i.icon+" — "+t.labels[i.group]).join("; ");
@@ -205,7 +311,9 @@ export function solutionText(t){
 export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,focus="mixed"}={}){
  count=Math.max(1,Math.min(20,Number(count)||7));
  const eligible=(ids)=>ids.filter(id=>CATALOG.find(c=>c.id===id).minAge<=resolveAge(age));
- const pool=eligible(focus==="logic"?["shadow","differences","odd","sequence","sort","pair","maze","compare"]:focus==="story"?["find","sort","sequence","maze","count","pair","story"]:READY_IDS);
+ const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","compare"]:focus==="story"?["find","sort","sequence","maze","count","pair","story"]:READY_IDS;
+ const pool=eligible(candidates);
+ if(pool.length===0)throw new Error("Эта механика пока не подходит выбранному возрасту.");
  const r=seeded(seed),tasks=Array.from({length:count},(_,i)=>makeTask(pool[i%pool.length],age,theme,integer(r,2**30)+i));
  if(!tasks.every(validateTask))throw new Error("Автопроверка заданий не пройдена");
  return {schema:"chudolet.bundle.v1",title:"Приключение: "+(THEMES[theme]?.name||THEMES.clouds.name),age,theme,count,seed,focus,created:"",tasks};

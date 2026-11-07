@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer} from "../src/engine.mjs";
-test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,11);});
+import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer,countSudokuSolutions,validSudokuSolution} from "../src/engine.mjs";
+test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,14);});
 test("Генераторы всех тем и возрастов гарантированно корректны",()=>{
  for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(const kind of READY_IDS)for(let seed=0;seed<30;seed++){
   const t=makeTask(kind,age,theme,seed);
@@ -14,7 +14,7 @@ test("Одинаковые параметры порождают одинако�
  const a=generateBundle({seed:42,count:20}),b=generateBundle({seed:42,count:20});
  assert.deepEqual(a,b);
 });
-test("В неготовую механику попасть нельзя",()=>assert.throws(()=>makeTask("sudoku"),/ещё не готов/));
+test("В неготовую механику попасть нельзя",()=>assert.throws(()=>makeTask("crossword"),/ещё не готов/));
 test("Ошибочные ответы отбрасываются",()=>{
  const m=makeTask("maze","7-9","clouds",10);assert.equal(checkAnswer(m,[0,m.size*m.size-1]),false);
  const s=makeTask("sort","5-6","forest",15);assert.equal(checkAnswer(s,s.items.map(x=>1-x.group)),false);
@@ -64,4 +64,40 @@ test("«Найди отличия»: точное количество заме�
 test("Комплект для самых маленьких не включает механики старших возрастов",()=>{
  const b=generateBundle({age:"3-4",count:20,focus:"mixed"});
  assert.ok(b.tasks.every(t=>CATALOG.find(c=>c.id===t.kind).minAge<=3));
+});
+
+test("Что изменилось: исчезает ровно один из уникальных предметов",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<45;seed++){
+  const t=makeTask("memory",age,theme,seed);
+  assert.equal(validateTask(t),true);assert.equal(t.changed.filter(x=>x===null).length,1);
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,t.options.find(x=>x!==t.answer)),false);
+ }
+});
+test("Таблица признаков: однозначная пара на пересечении",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["5-6","7-9","10-12"])for(let seed=0;seed<45;seed++){
+  const t=makeTask("table",age,theme,seed);
+  assert.equal(validateTask(t),true);
+  assert.equal(t.options[t.answer][0],t.rows[t.missing[0]]);
+  assert.equal(t.options[t.answer][1],t.columns[t.missing[1]]);
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,(t.answer+1)%4),false);
+ }
+});
+test("Мини-судоку: правила строк, столбцов и квадратов + единственность решения",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["5-6","7-9","10-12"])for(let seed=0;seed<55;seed++){
+  const t=makeTask("sudoku",age,theme,seed);
+  assert.ok(validSudokuSolution(t.solution));
+  assert.equal(countSudokuSolutions(t.grid,2),1);
+  assert.equal(validateTask(t),true);
+  assert.equal(checkAnswer(t,t.solution),true);
+  assert.equal(checkAnswer(t,t.grid),false);
+  const broken=t.solution.slice();broken[0]=broken[1];
+  assert.equal(checkAnswer(t,broken),false);
+ }
+});
+test("Возрастная фильтрация не допускает неуместный одиночный режим",()=>{
+ assert.throws(()=>generateBundle({age:"3-4",focus:"type:sudoku"}),/возрасту/);
+ const b=generateBundle({age:"10-12",focus:"type:sudoku",count:8});
+ assert.equal(b.tasks.length,8);assert.ok(b.tasks.every(t=>t.kind==="sudoku"));
 });
