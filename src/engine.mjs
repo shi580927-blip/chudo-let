@@ -16,7 +16,7 @@ export const CATALOG = [
  ["phrase","Закончи фразу","Речь",5],["cipher","Секретный шифр","Приключения",6],
  ["backpack","Волшебный рюкзак","Приключения",4],["detective","Маленький детектив","Приключения",6],
  ["branching","Приключение с выбором","Приключения",5],["team","Командная миссия","Приключения",6]
-].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","count","compare","story"].includes(id)}));
+].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","map","count","compare","number","story","cipher"].includes(id)}));
 
 export const THEMES = {
  clouds:{name:"Облачная почта",icon:"☁️",a:["✉️","📦","🪁","🧭","🔔","🗝️"],b:["🌈","⭐","☁️","🌙","☀️","⚡"],labels:["Почтовые находки","Небесные чудеса"]},
@@ -168,9 +168,93 @@ function makeSudoku(r,combined,age){
  return {size:4,symbols,grid,solution,blankCount:grid.filter(n=>n===null).length};
 }
 
+// Маршрут по реальной сетке, без прыжков, выходов за края и повторов клеток.
+const MAP_DIRECTIONS=[
+ {arrow:"→",dx:1,dy:0},{arrow:"←",dx:-1,dy:0},
+ {arrow:"↓",dx:0,dy:1},{arrow:"↑",dx:0,dy:-1}
+];
+export function traceMap(task){
+ const size=task.size;
+ if(!Number.isInteger(size)||size<3||!Number.isInteger(task.start)||task.start<0||task.start>=size*size||!Array.isArray(task.directions))return null;
+ const path=[task.start],seen=new Set(path);
+ for(const arrow of task.directions){
+  const move=MAP_DIRECTIONS.find(d=>d.arrow===arrow);
+  if(!move)return null;
+  const old=path.at(-1),x=old%size+move.dx,y=Math.floor(old/size)+move.dy;
+  if(x<0||y<0||x>=size||y>=size)return null;
+  const next=y*size+x;
+  if(seen.has(next))return null;
+  path.push(next);seen.add(next);
+ }
+ return path;
+}
+function makeMapRoute(size,steps,r){
+ const starts=shuffle(Array.from({length:size*size},(_,i)=>i),r);
+ for(const start of starts){
+  const seen=new Set([start]),path=[start],directions=[];
+  const walk=()=>{
+   if(directions.length===steps)return true;
+   const at=path.at(-1),x=at%size,y=Math.floor(at/size);
+   for(const d of shuffle(MAP_DIRECTIONS,r)){
+    const nx=x+d.dx,ny=y+d.dy;
+    if(nx<0||ny<0||nx>=size||ny>=size)continue;
+    const next=ny*size+nx;
+    if(seen.has(next))continue;
+    path.push(next);seen.add(next);directions.push(d.arrow);
+    if(walk())return true;
+    directions.pop();seen.delete(next);path.pop();
+   }
+   return false;
+  };
+  if(walk())return {start,path,directions};
+ }
+ throw new Error("Не удалось построить маршрут карты");
+}
+const CIPHER_WORDS={
+ clouds:["ПОЧТА","ЗВЕЗДА","ОБЛАКО","КОМПАС","ПОСЫЛКА","СЕКРЕТ","СИГНАЛ"],
+ forest:["ГРИБ","ЛИСА","ПОЛЯНА","РОДНИК","БЕРЁЗА","ТРОПИНКА","ЗАГАДКА"],
+ ocean:["МОРЕ","ВОЛНА","ОСТРОВ","АКУЛА","РАКУШКА","ЖЕМЧУГ"],
+ space:["РАКЕТА","КОСМОС","ОРБИТА","ЗВЕЗДА","ПЛАНЕТА","СПУТНИК"],
+ pirate:["ПИРАТ","КАРТА","СУНДУК","КОМПАС","СОКРОВИЩЕ"],
+ dino:["ЯЙЦО","ЛАПКА","ДОЛИНА","ХВОСТ","ДИНОЗАВР","ЯЩЕРИЦА"]
+};
+const CIPHER_ALPHABET=[..."АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"];
+const CIPHER_SYMBOLS=[..."◆●▲■★✿✦☂☾☀♣♠♥⬟⬢✚✱◉◇▽♜⚑☁"];
+
 function taskFor(kind,age,theme,r){
  const t=THEMES[theme]||THEMES.clouds,combined=[...t.a,...t.b],short=age<=3;
  let q={kind,title:CATALOG.find(e=>e.id===kind)?.name??kind,theme,age};
+ if(kind==="map"){
+  const size=age>=7?5:4,steps=age>=10?7:age>=7?6:4;
+  const route=makeMapRoute(size,steps,r),goal=route.path.at(-1);
+  const icons=Array(size*size).fill(null);
+  const positions=[goal,...shuffle(Array.from({length:size*size},(_,i)=>i).filter(i=>i!==goal&&i!==route.start),r).slice(0,size===4?8:10)];
+  const symbols=shuffleUnique(combined,r,positions.length);
+  for(let i=0;i<positions.length;i++)icons[positions[i]]=symbols[i];
+  const answer=icons[goal],options=shuffle([answer,...shuffle(symbols.filter(x=>x!==answer),r).slice(0,3)],r);
+  return {...q,prompt:"От флажка двигайся по стрелкам. Какой предмет найдёшь в конце пути?",size,start:route.start,
+   directions:route.directions,path:route.path,icons,options,answer};
+ }
+ if(kind==="cipher"){
+  const dictionary=CIPHER_WORDS[theme]||CIPHER_WORDS.clouds;
+  const maxLength=age<=5?6:age<=7?7:10;
+  const suitable=dictionary.filter(w=>w.length<=maxLength);
+  const answer=pick(suitable,r),used=[...new Set(answer)];
+  const extras=shuffle(CIPHER_ALPHABET.filter(x=>!used.includes(x)),r).slice(0,3);
+  const letters=shuffle([...used,...extras],r);
+  const symbols=shuffle(CIPHER_SYMBOLS,r).slice(0,letters.length);
+  const key=shuffle(letters.map((letter,i)=>({letter,symbol:symbols[i]})),r);
+  const lookup=new Map(key.map(k=>[k.letter,k.symbol]));
+  const encoded=[...answer].map(letter=>lookup.get(letter));
+  return {...q,prompt:"Расшифруй секретное слово. Воспользуйся ключом и собери буквы по порядку.",key,encoded,answer};
+ }
+ if(kind==="number"){
+  const hundreds=age>=10?1+integer(r,3):0;
+  const tens=age<=5?1+integer(r,3):age<=7?2+integer(r,5):integer(r,8);
+  const ones=integer(r,10);
+  const value=hundreds*100+tens*10+ones;
+  return {...q,prompt:"Сосчитай большие квадраты, десятки и отдельные кружочки. Составь число.",hundreds,tens,ones,value,answer:String(value)};
+ }
  if(kind==="memory"){
   const base=shuffleUnique(combined,r,age<=5?4:6);
   const missing=integer(r,base.length),changed=base.slice();
@@ -253,6 +337,28 @@ export function makeTask(kind,age="5-6",theme="clouds",seed=1){
 }
 export function validateTask(t){
  if(!t||!READY_IDS.includes(t.kind))return false;
+ if(t.kind==="map"){
+  if(!Number.isInteger(t.size)||![4,5].includes(t.size)||!Array.isArray(t.path)||!Array.isArray(t.icons)||t.icons.length!==t.size*t.size)return false;
+  const traced=traceMap(t);
+  if(!traced||traced.length<4||traced.join(",")!==t.path.join(","))return false;
+  if(!Array.isArray(t.options)||t.options.length!==4||new Set(t.options).size!==4)return false;
+  const icons=t.icons.filter(x=>x!==null);
+  return t.icons[t.start]===null&&icons.length>=9&&new Set(icons).size===icons.length&&
+   t.answer===t.icons[traced.at(-1)]&&t.options.filter(x=>x===t.answer).length===1&&t.options.every(x=>icons.includes(x));
+ }
+ if(t.kind==="cipher"){
+  if(!Array.isArray(t.key)||!Array.isArray(t.encoded)||typeof t.answer!=="string"||!/^[А-ЯЁ]{4,10}$/.test(t.answer))return false;
+  if(t.encoded.length!==t.answer.length||t.key.length<6||t.key.length>CIPHER_SYMBOLS.length)return false;
+  const symbols=t.key.map(k=>k.symbol),letters=t.key.map(k=>k.letter);
+  if(new Set(symbols).size!==symbols.length||new Set(letters).size!==letters.length||!symbols.every(s=>CIPHER_SYMBOLS.includes(s))||!letters.every(l=>CIPHER_ALPHABET.includes(l)))return false;
+  const lookup=new Map(t.key.map(k=>[k.letter,k.symbol]));
+  return t.key.length>new Set(t.answer).size&&[...t.answer].every((l,i)=>lookup.get(l)===t.encoded[i]);
+ }
+ if(t.kind==="number"){
+  if(![t.hundreds,t.tens,t.ones,t.value].every(Number.isInteger))return false;
+  if(t.hundreds<0||t.hundreds>3||t.tens<0||t.tens>9||t.ones<0||t.ones>9)return false;
+  return t.value>=10&&t.value===t.hundreds*100+t.tens*10+t.ones&&t.answer===String(t.value);
+ }
  if(t.kind==="memory"){
   if(!Array.isArray(t.base)||!Array.isArray(t.changed)||!Array.isArray(t.options)||t.base.length<4||t.base.length!==t.changed.length)return false;
   if(new Set(t.base).size!==t.base.length||t.options.length!==4||new Set(t.options).size!==4)return false;
@@ -298,6 +404,9 @@ export function validateTask(t){
  return false;
 }
 export function checkAnswer(t,value){
+ if(t.kind==="map")return typeof value==="string"&&value===t.answer;
+ if(t.kind==="cipher")return typeof value==="string"&&value===t.answer;
+ if(t.kind==="number")return typeof value==="string"&&value===t.answer;
  if(t.kind==="memory")return value===t.answer;
  if(t.kind==="table")return Number.isInteger(value)&&value===t.answer;
  if(t.kind==="sudoku")return Array.isArray(value)&&value.length===16&&value.every((v,i)=>v===t.solution[i]);
@@ -308,6 +417,9 @@ export function checkAnswer(t,value){
  return String(value)===String(t.answer);
 }
 export function solutionText(t){
+ if(t.kind==="map"){const last=t.path.at(-1);return "Маршрут: "+t.directions.join(" ")+"; финиш (столбец "+(last%t.size+1)+", строка "+(Math.floor(last/t.size)+1)+"): "+t.answer;}
+ if(t.kind==="cipher")return "Слово: "+t.answer;
+ if(t.kind==="number")return t.hundreds+"×100 + "+t.tens+"×10 + "+t.ones+" = "+t.value;
  if(t.kind==="memory")return "Исчез: "+t.answer+" (позиция "+(t.position+1)+")";
  if(t.kind==="table")return "Пара: "+t.rows[t.missing[0]]+" + "+t.columns[t.missing[1]];
  if(t.kind==="sudoku")return [0,1,2,3].map(row=>t.solution.slice(row*4,row*4+4).map(n=>t.symbols[n]).join(" ")).join(" / ");
@@ -322,7 +434,7 @@ export function solutionText(t){
 export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,focus="mixed"}={}){
  count=Math.max(1,Math.min(20,Number(count)||7));
  const eligible=(ids)=>ids.filter(id=>CATALOG.find(c=>c.id===id).minAge<=resolveAge(age));
- const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","compare"]:focus==="story"?["find","sort","sequence","maze","count","pair","story"]:READY_IDS;
+ const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","map","compare","number","cipher"]:focus==="story"?["find","sort","sequence","maze","map","count","pair","story","cipher"]:READY_IDS;
  const pool=eligible(candidates);
  if(pool.length===0)throw new Error("Эта механика пока не подходит выбранному возрасту.");
  const r=seeded(seed),tasks=Array.from({length:count},(_,i)=>makeTask(pool[i%pool.length],age,theme,integer(r,2**30)+i));

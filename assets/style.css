@@ -92,3 +92,46 @@ button.diff-cell:hover,button.diff-cell:focus-visible{border-color:#7951cf;outli
  .print-task .sudoku-grid{width:100mm;margin:5mm auto}
  .print-task .sudoku-cell{font-size:24pt}
 }
+
+/* Три GAME-механики: карта, полный шифр и числовой конструктор. */
+.map-directions{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px;margin:12px auto 18px;max-width:650px}
+.map-arrow{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border:2px solid #a188cf;border-radius:13px;background:#fff8e2;color:#69429f;font-size:32px;font-weight:900;line-height:1}
+.map-grid{display:grid;grid-template-columns:repeat(var(--map-size),minmax(0,1fr));gap:5px;max-width:550px;margin:0 auto 20px;padding:10px;border-radius:23px;background:#e4f3fa;border:2px solid #a7d9e5}
+.map-cell{aspect-ratio:1;min-width:0;border-radius:16px;border:2px solid #d5e5e1;background:linear-gradient(155deg,#fffef0,#f4e9cf);display:flex;align-items:center;justify-content:center;font-size:clamp(29px,3.4vw,50px);line-height:1}
+.map-cell.map-start{background:#e8f8d8;border-color:#75a283;box-shadow:inset 0 0 0 2px #ffffff}
+.map-empty{color:#cbc3b3;font-size:20px}
+.map-flag{filter:drop-shadow(0 2px 2px #62624a44)}
+.cipher-code,.cipher-slots,.number-slots{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin:15px auto 21px}
+.cipher-symbol{min-width:49px;min-height:62px;border:2px solid #d8c4ef;border-radius:13px;background:#fff9e9;color:#583e90;display:flex;align-items:center;justify-content:center;font-size:39px}
+.cipher-key{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;max-width:590px;margin:10px auto 22px}
+.cipher-key-item{display:flex;justify-content:center;align-items:center;gap:6px;border:1px solid #ded4f0;border-radius:12px;background:#fff;padding:9px 4px;min-width:0}
+.cipher-key-item b{font-size:29px;color:#6a34b8;line-height:1}.cipher-key-item span{color:#9588ad}.cipher-key-item strong{font-size:21px;color:#39304d}
+.cipher-slot,.number-slot{width:48px;height:53px;border-bottom:3px solid #7451ce;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:850}
+.cipher-slot.blank{color:#b9b5c7}
+.cipher-keyboard,.number-keypad{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;max-width:650px;margin:14px auto 0}
+.cipher-letter,.number-key{min-width:51px;min-height:54px;padding:8px;border:2px solid #d4c4ea;border-radius:13px;background:#fff;font-size:26px;font-weight:800;color:#513d72;cursor:pointer}
+.cipher-letter:hover,.number-key:hover{background:#f1eaff;border-color:#7451ce}
+.number-groups{display:grid;gap:14px;margin:8px auto 20px;max-width:650px}
+.number-group{background:#fff;border:1px solid #e7ddf3;border-radius:17px;padding:10px 13px}
+.number-group .game-label{font-size:13px;margin:0 0 8px;color:#7655a2}
+.number-pieces{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.number-hundred{width:72px;height:72px;border:3px solid #9170bb;background:repeating-linear-gradient(0deg,transparent 0 10%,#ae98cc55 10% 12%),repeating-linear-gradient(90deg,#dfd3ef 0 10%,#ccb8e777 10% 12%);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:27px;color:#55327b;font-weight:900}
+.number-ten{display:grid;grid-template-columns:repeat(5,8px);grid-template-rows:repeat(2,8px);gap:3px;background:#fff1ca;padding:9px;border:2px solid #cba250;border-radius:10px}
+.number-ten i{width:8px;height:8px;border-radius:50%;background:#e59b44;display:block}
+.number-one{display:block;width:26px;height:26px;background:radial-gradient(circle at 30% 25%,#fff8c0,#eeb756 65%,#ca9144);border:2px solid #bf8e41;border-radius:50%}
+.number-none{color:#868098;font-size:13px}
+@media(max-width:760px){
+ .map-grid{padding:6px;gap:4px}.map-cell{border-radius:10px;font-size:clamp(26px,7vw,42px)}
+ .map-arrow{width:41px;height:41px;font-size:28px}
+ .cipher-symbol{min-width:39px;min-height:48px;font-size:29px}.cipher-key{gap:4px}.cipher-key-item{gap:3px;padding:5px 2px}.cipher-key-item b{font-size:22px}.cipher-key-item strong{font-size:17px}
+ .cipher-letter,.number-key{min-width:46px;min-height:51px}.number-ten{padding:7px}
+}
+@media print{
+ .print-task .map-grid{max-width:118mm;gap:1mm;padding:2mm;background:#fff;border:1px solid #aaa}
+ .print-task .map-cell{font-size:27pt;border:1px solid #bbb;background:#fff}
+ .print-task .map-arrow{width:12mm;height:12mm;font-size:23pt}
+ .print-task .cipher-key{max-width:125mm;gap:1mm}.print-task .cipher-key-item{padding:2mm}.print-task .cipher-symbol{font-size:23pt;min-height:11mm}
+ .print-task .number-ten{border:1px solid #888;background:#fff}.print-task .number-ten i{background:#555}
+ .print-task .number-hundred{background:#eee}.print-task .number-one{background:#bbb;border-color:#888}
+ .print-task .number-group{padding:2mm}
+}

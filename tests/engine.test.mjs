@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer,countSudokuSolutions,validSudokuSolution} from "../src/engine.mjs";
-test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,14);});
+import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer,countSudokuSolutions,validSudokuSolution,traceMap} from "../src/engine.mjs";
+test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,17);});
 test("Генераторы всех тем и возрастов гарантированно корректны",()=>{
  for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(const kind of READY_IDS)for(let seed=0;seed<30;seed++){
   const t=makeTask(kind,age,theme,seed);
@@ -105,4 +105,46 @@ test("Возрастная фильтрация не допускает неум
  assert.throws(()=>generateBundle({age:"3-4",focus:"type:sudoku"}),/возрасту/);
  const b=generateBundle({age:"10-12",focus:"type:sudoku",count:8});
  assert.equal(b.tasks.length,8);assert.ok(b.tasks.every(t=>t.kind==="sudoku"));
+});
+
+test("Карта: 6 миров × 4 возраста × 80 вариантов; маршруты без прыжков и повторов",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<80;seed++){
+  const t=makeTask("map",age,theme,seed);
+  assert.equal(validateTask(t),true,theme+" "+age+" "+seed);
+  const path=traceMap(t);
+  assert.deepEqual(path,t.path);
+  assert.equal(new Set(path).size,path.length);
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,t.options.find(x=>x!==t.answer)),false);
+  assert.equal(validateTask({...t,directions:[...t.directions,"↑","↓"]}),false);
+ }
+});
+test("Шифр: полный уникальный ключ, перемешанные символы, нет раскрытого ответа",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<80;seed++){
+  const t=makeTask("cipher",age,theme,seed);
+  assert.equal(validateTask(t),true);
+  const map=new Map(t.key.map(pair=>[pair.symbol,pair.letter]));
+  assert.equal(t.encoded.map(sym=>map.get(sym)).join(""),t.answer);
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,t.answer.slice(0,-1)),false);
+  assert.equal(validateTask({...t,encoded:t.encoded.slice(1)}),false);
+  assert.ok(t.key.length>new Set(t.answer).size);
+ }
+});
+test("Число: сумма сотен, десятков и единиц совпадает с единственным ответом",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<80;seed++){
+  const t=makeTask("number",age,theme,seed);
+  assert.equal(validateTask(t),true);
+  assert.equal(checkAnswer(t,String(t.hundreds*100+t.tens*10+t.ones)),true);
+  assert.equal(checkAnswer(t,String(t.value+1)),false);
+  assert.equal(validateTask({...t,value:t.value+1}),false);
+ }
+});
+test("Отдельные режимы доступны только подходящим возрастным группам",()=>{
+ assert.throws(()=>generateBundle({age:"3-4",focus:"type:map"}),/возрасту/);
+ assert.throws(()=>generateBundle({age:"5-6",focus:"type:cipher"}),/возрасту/);
+ for(const focus of ["type:map","type:cipher","type:number"]){
+  const b=generateBundle({age:"7-9",focus,count:8,seed:102});
+  assert.equal(b.tasks.length,8);assert.ok(b.tasks.every(validateTask));
+ }
 });

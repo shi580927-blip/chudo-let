@@ -45,6 +45,37 @@ function mazeSvg(t,print=false){
 }
 function board(t,print=false){
  const pick=(opts)=>pickButtons(opts,print,t.theme);
+ if(t.kind==="map"){
+  const grid=t.icons.map((icon,i)=>'<div class="map-cell'+(i===t.start?' map-start':'')+'" aria-label="'+(i===t.start?'Начало маршрута':icon?'Место с предметом':'Пустой участок')+'">'+
+   (i===t.start?'<span class="map-flag">🚩</span>':icon!==null?draw(icon,t.theme):'<span class="map-empty">·</span>')+'</div>').join("");
+  const arrows=t.directions.map((arrow,i)=>'<span class="map-arrow" aria-label="Шаг '+(i+1)+'">'+arrow+'</span>').join("");
+  return '<p class="game-label">Начало — 🚩. Пройди шаг за шагом, не пропуская стрелки.</p><div class="map-directions">'+arrows+'</div>'+
+   '<div class="map-grid" style="--map-size:'+t.size+'">'+grid+'</div><p class="game-label">На каком предмете остановишься?</p>'+pick(t.options);
+ }
+ if(t.kind==="cipher"){
+  const input=typeof state.answer==="string"?state.answer:"";
+  const slots=Array.from({length:t.encoded.length},(_,i)=>'<span class="cipher-slot">'+escapeHtml(input[i]||"·")+'</span>').join("");
+  const encoded=t.encoded.map(s=>'<span class="cipher-symbol">'+escapeHtml(s)+'</span>').join("");
+  const key=t.key.map(k=>'<div class="cipher-key-item"><b>'+escapeHtml(k.symbol)+'</b><span>=</span><strong>'+escapeHtml(k.letter)+'</strong></div>').join("");
+  const keys=print?'':'<div class="cipher-keyboard">'+t.key.map(k=>'<button type="button" class="cipher-letter" data-action="cipherLetter" data-value="'+escapeHtml(k.letter)+'">'+escapeHtml(k.letter)+'</button>').join("")+
+   '<button type="button" class="ghost" data-action="textBack">⌫ Стереть</button><button type="button" class="ghost" data-action="textClear">Очистить</button></div>';
+  return '<div class="cipher-code">'+encoded+'</div><p class="game-label">Ключ к секретному сообщению (порядок перепутан):</p><div class="cipher-key">'+key+'</div>'+
+   '<p class="game-label">Твоё слово:</p><div class="cipher-slots">'+(print?Array.from({length:t.encoded.length},()=>'<span class="cipher-slot blank">_</span>').join(""):slots)+'</div>'+keys;
+ }
+ if(t.kind==="number"){
+  const pieces=(count,kind)=>Array.from({length:count},()=>{
+   if(kind==="hundreds")return '<span class="number-hundred" aria-label="Сто">100</span>';
+   if(kind==="tens")return '<span class="number-ten" aria-label="Десяток">'+Array.from({length:10},()=>'<i></i>').join("")+'</span>';
+   return '<span class="number-one" aria-label="Единица"></span>';
+  }).join("");
+  const item=(label,kind,n)=>'<div class="number-group"><div class="game-label">'+label+'</div><div class="number-pieces">'+(n===0?'<span class="number-none">Нет</span>':pieces(n,kind))+'</div></div>';
+  const answer=typeof state.answer==="string"?state.answer:"";
+  const slots=Array.from({length:String(t.value).length},(_,i)=>'<span class="number-slot">'+(print?'_':escapeHtml(answer[i]||"·"))+'</span>').join("");
+  const keypad=print?'':'<div class="number-keypad">'+Array.from({length:10},(_,i)=>'<button type="button" class="number-key" data-action="numberDigit" data-value="'+i+'">'+i+'</button>').join("")+
+   '<button type="button" class="ghost" data-action="textBack">⌫ Стереть</button><button type="button" class="ghost" data-action="textClear">Очистить</button></div>';
+  return '<div class="number-groups">'+(t.hundreds?item("Сотни","hundreds",t.hundreds):"")+item("Десятки","tens",t.tens)+item("Единицы","ones",t.ones)+'</div>'+
+   '<p class="game-label">Какое число получилось?</p><div class="number-slots">'+slots+'</div>'+keypad;
+ }
  if(t.kind==="memory"){
   const observe=!print&&state.phase!=="answer";
   const cards=cells=>'<div class="memory-cards">'+cells.map(icon=>'<div class="memory-tile">'+(icon===null?'<span class="memory-empty">?</span>':draw(icon,t.theme))+'</div>').join("")+'</div>';
@@ -110,7 +141,7 @@ function board(t,print=false){
  return "<p>Механика пока не поддерживается.</p>";
 }
 function hintFor(t){
- switch(t.kind){case"memory":return"Запомни все значки и их места, затем нажми кнопку и найди исчезнувший.";case"table":return"Сравни нужную строку и столбец: на пересечении должны быть оба значка.";case"sudoku":return"В каждой строке, столбце и квадрате 2×2 значки не повторяются.";case"differences":return"Сравни предметы в одинаковых клетках обеих картинок — начни с верхнего ряда.";case"find":case"count":return"Посмотри на каждую строчку слева направо и отмечай найденные значки.";case"odd":return"Пять картинок можно объединить в одну группу, а одну — нет.";case"shadow":return"Сравни общий контур, а не цвет.";case"sequence":return"Посмотри, через сколько шагов повторяется рисунок.";case"sort":return"Названия корзин помогут понять общее свойство.";case"pair":return"Подумай, что обычно используется вместе.";case"maze":return"Из каждой клетки можно перейти только туда, где нет стенки.";case"compare":return"Сосчитай предметы с каждой стороны.";case"story":return"Что произошло сначала, а что могло случиться только потом?";default:return"Посмотри внимательно на условие.";}
+ switch(t.kind){case"map":return"Найди флажок. Следуй стрелкам по порядку, каждую стрелку считай одним шагом.";case"cipher":return"Для каждого значка найди букву в ключе. Записывай буквы по очереди.";case"number":return"Большой квадрат — сто, полоска из десяти точек — десять, маленький круг — один.";case"memory":return"Запомни все значки и их места, затем нажми кнопку и найди исчезнувший.";case"table":return"Сравни нужную строку и столбец: на пересечении должны быть оба значка.";case"sudoku":return"В каждой строке, столбце и квадрате 2×2 значки не повторяются.";case"differences":return"Сравни предметы в одинаковых клетках обеих картинок — начни с верхнего ряда.";case"find":case"count":return"Посмотри на каждую строчку слева направо и отмечай найденные значки.";case"odd":return"Пять картинок можно объединить в одну группу, а одну — нет.";case"shadow":return"Сравни общий контур, а не цвет.";case"sequence":return"Посмотри, через сколько шагов повторяется рисунок.";case"sort":return"Названия корзин помогут понять общее свойство.";case"pair":return"Подумай, что обычно используется вместе.";case"maze":return"Из каждой клетки можно перейти только туда, где нет стенки.";case"compare":return"Сосчитай предметы с каждой стороны.";case"story":return"Что произошло сначала, а что могло случиться только потом?";default:return"Посмотри внимательно на условие.";}
 }
 function renderNav(){
  $("taskNav").innerHTML=state.bundle.tasks.map((t,i)=>'<button class="task-pill'+(i===state.index?' active':'')+(state.done.has(i)?' done':'')+'" data-task="'+i+'" title="'+escapeHtml(t.title)+'" aria-label="Задание '+(i+1)+'">'+(i+1)+'</button>').join("");
@@ -118,7 +149,7 @@ function renderNav(){
 function renderTask(){
  const t=task(),ready=state.answer!==null;
  let feedback=state.checked==="incomplete"
-  ?'<div class="feedback" role="status">Закончите задание полностью для проверки — заполните все пустые клетки.</div>'
+  ?'<div class="feedback" role="status">'+(t.kind==="sudoku"?"Закончите задание полностью для проверки — заполните все пустые клетки.":"Сначала заполни все буквы или цифры, затем проверим ответ.")+'</div>'
   :state.checked?'<div class="feedback '+(checkAnswer(t,state.answer)?'good':'')+'" role="status">'+(checkAnswer(t,state.answer)?"✓ Верно! Отличная работа.":"Не совсем. Можно попробовать ещё раз!")+'</div>':'';
  $("activity").innerHTML='<div class="activity-intro"><div><span class="group">'+escapeHtml(CATALOG.find(c=>c.id===t.kind).group)+' · Задание '+(state.index+1)+'</span><h3>'+escapeHtml(t.title)+'</h3></div><span class="status ready">● Можно играть</span></div><p class="prompt">'+promptHTML(t)+'</p><div class="game-board">'+board(t)+'</div><div class="game-actions"><button class="primary" data-action="check" '+(!ready?'disabled':'')+'>✓ Проверить</button><button class="ghost" data-action="reset">↻ Сначала</button><button class="ghost" data-action="hint">? Подсказка</button></div>'+(state.hint?'<div class="answer-hint">'+escapeHtml(hintFor(t))+'</div>':'')+feedback;
  $("taskCounter").textContent="Задание "+(state.index+1)+" из "+state.bundle.tasks.length;
@@ -140,6 +171,21 @@ function tryMove(cell){
 $("activity").addEventListener("click",event=>{
  const target=event.target.closest("[data-action]");if(!target)return;
  const action=target.dataset.action,t=task();
+ if(action==="cipherLetter"&&t.kind==="cipher"){
+  const current=typeof state.answer==="string"?state.answer:"";
+  if(current.length<t.answer.length)state.answer=current+String(target.dataset.value);
+  state.checked=false;
+ }
+ if(action==="numberDigit"&&t.kind==="number"){
+  const current=typeof state.answer==="string"?state.answer:"",digit=String(target.dataset.value);
+  if((current.length>0||digit!=="0")&&current.length<t.answer.length)state.answer=current+digit;
+  state.checked=false;
+ }
+ if((action==="textBack"||action==="textClear")&&(t.kind==="cipher"||t.kind==="number")){
+  const current=typeof state.answer==="string"?state.answer:"";
+  state.answer=action==="textBack"?current.slice(0,-1):"";
+  state.checked=false;
+ }
  if(action==="memoryReveal"&&t.kind==="memory"){state.phase="answer";state.answer=null;state.checked=false;}
  if(action==="pickTable"&&t.kind==="table"){state.answer=Number(target.dataset.value);state.checked=false;}
  if(action==="sudokuCell"&&t.kind==="sudoku"){
@@ -166,6 +212,8 @@ $("activity").addEventListener("click",event=>{
  if(action==="check"){
   if(state.answer===null)return;
   if(t.kind==="sudoku"&&(!Array.isArray(state.answer)||state.answer.some(v=>v===null))){
+   state.checked="incomplete";
+  }else if((t.kind==="cipher"||t.kind==="number")&&String(state.answer).length<t.answer.length){
    state.checked="incomplete";
   }else{
    state.checked=true;

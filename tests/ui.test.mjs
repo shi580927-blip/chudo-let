@@ -45,3 +45,33 @@ test("Задание на память использует новые отвл�
  click({action:"check"});
  assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
 });
+
+test("Карта: правильный итог маршрута выбран из четырёх значков",()=>{
+ const t=setup("type:map");
+ assert.match(el("activity").innerHTML,/map-grid/);
+ assert.match(el("activity").innerHTML,/map-directions/);
+ click({action:"pick",value:t.answer});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});
+test("Шифр: незавершённое слово просит дописать, полное проверяется",()=>{
+ const t=setup("type:cipher");
+ assert.match(el("activity").innerHTML,/cipher-key/);
+ assert.doesNotMatch(el("activity").innerHTML,new RegExp(">"+t.answer+"<"));
+ for(const letter of t.answer.slice(0,2))click({action:"cipherLetter",value:letter});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Сначала заполни все буквы или цифры/);
+ for(const letter of t.answer.slice(2))click({action:"cipherLetter",value:letter});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});
+test("Числовой конструктор: проверка неполного и правильного числа",()=>{
+ const t=setup("type:number");
+ assert.match(el("activity").innerHTML,/number-ten/);
+ for(const digit of t.answer.slice(0,1))click({action:"numberDigit",value:digit});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Сначала заполни все буквы или цифры/);
+ for(const digit of t.answer.slice(1))click({action:"numberDigit",value:digit});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});
