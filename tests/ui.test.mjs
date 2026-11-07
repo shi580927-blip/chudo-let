@@ -132,3 +132,34 @@ test("Кроссворд: ввод по клеткам, частичное по�
  click({action:"check"});
  assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
 });
+
+test("Печать: заполненный в браузере кроссворд остаётся пустым в детской части А4",()=>{
+ const t=setup("type:crossword","7-9");
+ const first=t.solution.findIndex(x=>x!==null);
+ click({action:"crosswordCell",cell:String(first)});
+ click({action:"crosswordLetter",value:t.solution[first]});
+ globalThis.requestAnimationFrame=callback=>callback();
+ globalThis.window={print(){}};
+ el("printBtn").handlers.click();
+ const print=el("printRoot").innerHTML;
+ const worksheet=print.split('<section class="answer-heading">')[0];
+ assert.match(worksheet,/class="crossword-grid"/);
+ assert.match(worksheet,/class="crossword-letter"><\/span>/);
+ assert.doesNotMatch(worksheet,/<span class="crossword-letter">[А-ЯЁ]/);
+ assert.match(print,/Ответы для взрослых/);
+});
+test("Печать: после сборки слова детские клеточки не содержат готовый ответ",()=>{
+ const t=setup("type:word","7-9");
+ const used=[];
+ for(const letter of t.answer){
+  const idx=t.tiles.findIndex((x,i)=>x===letter&&!used.includes(i));
+  assert.ok(idx>=0);used.push(idx);
+  click({action:"tilePick",value:String(idx)});
+ }
+ globalThis.requestAnimationFrame=callback=>callback();
+ globalThis.window={print(){}};
+ el("printBtn").handlers.click();
+ const worksheet=el("printRoot").innerHTML.split('<section class="answer-heading">')[0];
+ assert.match(worksheet,/class="word-slot">＿<\/span>/);
+ assert.doesNotMatch(worksheet,new RegExp('class="word-slot">'+t.answer[0]));
+});
