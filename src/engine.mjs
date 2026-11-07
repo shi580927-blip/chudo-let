@@ -46,17 +46,67 @@ export function solveMaze(task){
  for(const next of neighbors(task,at)){if(!seen.has(next)){seen.add(next);queue.push([...path,next]);}}}
  return null;
 }
-function maze(size,r){
+// Количество простых путей от старта до финиша, без циклических повторений.
+// Останавливаемся на четырёх: это быстрее, чем искать все лишние пути.
+export function countMazeRoutes(task,limit=4){
+ const goal=task.size*task.size-1,visited=new Set([0]);let routes=0;
+ function walk(at){
+  if(at===goal){routes++;return;}
+  if(routes>=limit)return;
+  for(const next of neighbors(task,at)){
+   if(!visited.has(next)){visited.add(next);walk(next);visited.delete(next);}
+   if(routes>=limit)return;
+  }
+ }
+ walk(0);return routes;
+}
+function gridWalls(task){
+ const walls=[],size=task.size,opened=new Set(task.edges.map(e=>[...e].sort((a,b)=>a-b).join("-")));
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  const a=y*size+x;
+  if(x<size-1&&!opened.has(a+"-"+(a+1)))walls.push([a,a+1]);
+  if(y<size-1&&!opened.has(a+"-"+(a+size)))walls.push([a,a+size]);
+ }
+ return walls;
+}
+function mazeTree(size,r){
  const visited=new Set([0]),edges=[],stack=[0];
- while(stack.length){const v=stack.at(-1),x=v%size,y=Math.floor(v/size);
- const adjacent=[[x+1,y],[x-1,y],[x,y+1],[x,y-1]]
- .filter(([nx,ny])=>nx>=0&&nx<size&&ny>=0&&ny<size)
- .map(([nx,ny])=>ny*size+nx).filter(n=>!visited.has(n));
- if(!adjacent.length){stack.pop();continue;}
- const n=pick(adjacent,r);edges.push([v,n]);visited.add(n);stack.push(n);
+ while(stack.length){
+  const v=stack.at(-1),x=v%size,y=Math.floor(v/size);
+  const adjacent=[[x+1,y],[x-1,y],[x,y+1],[x,y-1]]
+   .filter(([nx,ny])=>nx>=0&&nx<size&&ny>=0&&ny<size)
+   .map(([nx,ny])=>ny*size+nx).filter(n=>!visited.has(n));
+  if(!adjacent.length){stack.pop();continue;}
+  const n=pick(adjacent,r);edges.push([v,n]);visited.add(n);stack.push(n);
  }
  return {size,edges};
 }
+function maze(size,r,branching=false){
+ // До 7 лет сохраняем понятный единственный путь.
+ if(!branching)return {...mazeTree(size,r),routeCount:1};
+ const wantThree=r()<0.5;
+ for(let attempt=0;attempt<12;attempt++){
+  const result=mazeTree(size,r);
+  // У углового старта всего два соседних выхода — открываем оба.
+  const extraStart=neighbors(result,0).includes(1)?size:1;
+  result.edges.push([0,extraStart]);
+  // Добавленный цикл содержит старт и гарантирует ровно два решения.
+  if(!wantThree)return {...result,routeCount:2};
+  // Добавляем второе соединение только при трёх разных простых путях.
+  const candidate=shuffle(gridWalls(result),r).find(edge=>{
+   result.edges.push(edge);
+   const three=countMazeRoutes(result)===3;
+   result.edges.pop();return three;
+  });
+  if(candidate){result.edges.push(candidate);return {...result,routeCount:3};}
+ }
+ // На редких структурах не удаётся добавить третий путь:
+ // гарантируем как минимум два корректных прохода и два выхода вначале.
+ const result=mazeTree(size,r),extraStart=neighbors(result,0).includes(1)?size:1;
+ result.edges.push([0,extraStart]);
+ return {...result,routeCount:2};
+}
+
 function taskFor(kind,age,theme,r){
  const t=THEMES[theme]||THEMES.clouds,combined=[...t.a,...t.b],short=age<=3;
  let q={kind,title:CATALOG.find(e=>e.id===kind)?.name??kind,theme,age};
@@ -89,7 +139,7 @@ function taskFor(kind,age,theme,r){
   const selected=shuffle(pairs,r).slice(0,4),target=pick(selected,r);
   return {...q,prompt:"Что подходит к предмету "+target[0]+"?",target:target[0],options:shuffle(selected.map(x=>x[1]),r),answer:target[1]};
  }
- if(kind==="maze")return {...q,prompt:"Проведи героя от старта 🐾 до финиша ⭐.",...maze(short?4:age>=10?7:6,r),answer:null};
+ if(kind==="maze")return {...q,prompt:"Проведи героя от старта 🐾 до финиша ⭐.",...maze(short?4:age>=10?7:6,r,age>=7),answer:null};
  if(kind==="compare"){
   const left=1+integer(r,age<=3?4:8),right=1+integer(r,age<=3?4:8);
   return {...q,prompt:"Чего больше? Выбери знак.",left,right,icon:pick(combined,r),options:[">","=","<"],answer:left>right?">":left<right?"<":"="};
@@ -110,7 +160,12 @@ export function validateTask(t){
  if(t.kind==="odd")return Number.isInteger(t.answer)&&t.answer>=0&&t.answer<t.cells.length;
  if(t.kind==="shadow"||t.kind==="pair"||t.kind==="sequence")return t.options.includes(t.answer)&&new Set(t.options).size===t.options.length;
  if(t.kind==="sort")return t.items.length>0&&t.items.every(i=>i.group===0||i.group===1);
- if(t.kind==="maze")return t.edges.length===t.size*t.size-1&&!!solveMaze(t);
+ if(t.kind==="maze"){
+  const advanced=t.age>=7,extra=advanced?(t.routeCount===3?2:1):0;
+  return t.edges.length===t.size*t.size-1+extra&&
+    (advanced?([2,3].includes(t.routeCount)&&neighbors(t,0).length===2):t.routeCount===1)&&
+    countMazeRoutes(t)===t.routeCount&&!!solveMaze(t);
+ }
  if(t.kind==="compare")return (t.left>t.right?">":t.left<t.right?"<":"=")===t.answer;
  if(t.kind==="story")return t.cards.length===4&&t.cards.map(c=>c.order).sort().join(",")==="0,1,2,3";
  return false;
@@ -122,7 +177,7 @@ export function checkAnswer(t,value){
  return String(value)===String(t.answer);
 }
 export function solutionText(t){
- if(t.kind==="maze")return "Маршрут: "+solveMaze(t).map(n=>"("+((n%t.size)+1)+","+Math.floor(n/t.size+1)+")").join(" → ");
+ if(t.kind==="maze")return "Возможных маршрутов: "+t.routeCount+". Пример: "+solveMaze(t).map(n=>"("+((n%t.size)+1)+","+Math.floor(n/t.size+1)+")").join(" → ");
  if(t.kind==="sort")return t.items.map(i=>i.icon+" — "+t.labels[i.group]).join("; ");
  if(t.kind==="story")return STORY_STEPS.map(e=>e.text).join(" → ");
  if(t.kind==="odd")return t.cells[t.answer]+" (позиция "+(t.answer+1)+")";
