@@ -1,4 +1,5 @@
 import {WORD_BANK,allowedWords} from "./words.mjs";
+import {makePicturePuzzle,validatePicturePuzzle,checkPicturePuzzle,makeSymmetry,validateSymmetry,checkSymmetry,makeBackpack,validateBackpack,checkBackpack} from "./spatial.mjs";
 // ЧУДОЛЁТ — независимый детерминированный генератор заданий.
 // Никаких запросов к серверу; идентификаторы и решения сохраняются в JSON.
 export const CATALOG = [
@@ -15,9 +16,9 @@ export const CATALOG = [
  ["word","Собери слово","Речь",5],["syllables","Слоговый конструктор","Речь",5],
  ["story","История по порядку","Речь",4],["crossword","Кроссворд с картинками","Речь",7],
  ["phrase","Закончи фразу","Речь",5],["cipher","Секретный шифр","Приключения",7],
- ["backpack","Волшебный рюкзак","Приключения",4],["detective","Маленький детектив","Приключения",6],
+ ["backpack","Волшебный рюкзак","Приключения",5],["detective","Маленький детектив","Приключения",6],
  ["branching","Приключение с выбором","Приключения",5],["team","Командная миссия","Приключения",6]
-].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","map","count","compare","number","word","syllables","story","crossword","cipher"].includes(id)}));
+].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","map","count","compare","number","word","syllables","story","crossword","cipher","puzzle","symmetry","backpack"].includes(id)}));
 
 export const THEMES = {
  clouds:{name:"Облачная почта",icon:"☁️",a:["✉️","📦","🪁","🧭","🔔","🗝️"],b:["🌈","⭐","☁️","🌙","☀️","⚡"],labels:["Почтовые находки","Небесные чудеса"]},
@@ -305,6 +306,15 @@ function wordChoices(kind,theme,age){
 function taskFor(kind,age,theme,r,selectedWord=null){
  const t=THEMES[theme]||THEMES.clouds,combined=[...t.a,...t.b],short=age<=3;
  let q={kind,title:CATALOG.find(e=>e.id===kind)?.name??kind,theme,age};
+ if(kind==="puzzle"){
+  return {...q,prompt:"Восстанови картинку из перемешанных фрагментов. Смотри на маленький образец.",...makePicturePuzzle(t,age,r)};
+ }
+ if(kind==="symmetry"){
+  return {...q,prompt:"Какая правая половинка точно отражает левую, как в зеркале?",...makeSymmetry(t,age,r)};
+ }
+ if(kind==="backpack"){
+  return {...q,prompt:"Собери волшебный рюкзак по всем условиям. Выбери нужные предметы.",...makeBackpack(t,age,r)};
+ }
  if(kind==="word"){
   const pool=wordChoices(kind,theme,age);
   const entry=selectedWord===null?pick(pool,r):pool.find(w=>w.word===selectedWord);
@@ -437,6 +447,9 @@ export function makeTask(kind,age="5-6",theme="clouds",seed=1,selectedWord=null)
 }
 export function validateTask(t){
  if(!t||!READY_IDS.includes(t.kind))return false;
+ if(t.kind==="puzzle")return validatePicturePuzzle(t,THEMES[t.theme]??THEMES.clouds);
+ if(t.kind==="symmetry")return validateSymmetry(t,THEMES[t.theme]??THEMES.clouds);
+ if(t.kind==="backpack")return validateBackpack(t,THEMES[t.theme]??THEMES.clouds);
  if(t.kind==="word"||t.kind==="syllables"){
   if(typeof t.answer!=="string"||!Array.isArray(t.tiles)||typeof t.icon!=="string")return false;
   const dictionary=WORD_BANK[t.theme]??[];
@@ -514,6 +527,9 @@ export function validateTask(t){
  return false;
 }
 export function checkAnswer(t,value){
+ if(t.kind==="puzzle")return checkPicturePuzzle(t,value);
+ if(t.kind==="symmetry")return checkSymmetry(t,value);
+ if(t.kind==="backpack")return checkBackpack(t,value);
  if(t.kind==="word"||t.kind==="syllables"){
   if(!Array.isArray(value)||value.length!==t.tiles.length||new Set(value).size!==value.length)return false;
   return value.every(i=>Number.isInteger(i)&&i>=0&&i<t.tiles.length)&&value.map(i=>t.tiles[i]).join("")===t.answer;
@@ -534,6 +550,9 @@ export function checkAnswer(t,value){
  return String(value)===String(t.answer);
 }
 export function solutionText(t){
+ if(t.kind==="puzzle")return "Порядок фрагментов: "+t.answer.map(x=>x+1).join(" → ");
+ if(t.kind==="symmetry")return "Правильная половинка: "+(t.answer+1);
+ if(t.kind==="backpack")return "Предметы: "+t.answer.map(i=>t.items[i].icon).join(" ")+"; суммарный вес: "+t.totalWeight+" жетонов";
  if(t.kind==="word"||t.kind==="syllables")return "Слово: "+t.answer;
  if(t.kind==="crossword")return t.entries.map(x=>x.number+". "+x.word).join("; ");
  if(t.kind==="map"){const last=t.path.at(-1);return "Маршрут: "+t.directions.join(" ")+"; финиш (столбец "+(last%t.size+1)+", строка "+(Math.floor(last/t.size)+1)+"): "+t.answer;}
@@ -553,7 +572,7 @@ export function solutionText(t){
 export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,focus="mixed"}={}){
  count=Math.max(1,Math.min(20,Number(count)||7));
  const eligible=(ids)=>ids.filter(id=>CATALOG.find(c=>c.id===id).minAge<=resolveAge(age));
- const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","map","compare","number","cipher","crossword"]:focus==="story"?["find","sort","sequence","maze","map","count","pair","story","cipher","word","syllables","crossword"]:READY_IDS;
+ const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","map","compare","number","cipher","crossword","puzzle","symmetry"]:focus==="story"?["find","sort","sequence","maze","map","count","pair","story","cipher","word","syllables","crossword","puzzle","backpack"]:READY_IDS;
  const pool=eligible(candidates);
  if(pool.length===0)throw new Error("Эта механика пока не подходит выбранному возрасту.");
  const r=seeded(seed),tasks=[],cycles=new Map(),recentWords=[];
