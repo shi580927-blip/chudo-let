@@ -13,7 +13,7 @@ export const CATALOG = [
  ["number","Составь число","Математика",5],["shop","Магазин приключений","Математика",5],
  ["word","Собери слово","Речь",5],["syllables","Слоговый конструктор","Речь",5],
  ["story","История по порядку","Речь",4],["crossword","Кроссворд с картинками","Речь",6],
- ["phrase","Закончи фразу","Речь",5],["cipher","Секретный шифр","Приключения",6],
+ ["phrase","Закончи фразу","Речь",5],["cipher","Секретный шифр","Приключения",7],
  ["backpack","Волшебный рюкзак","Приключения",4],["detective","Маленький детектив","Приключения",6],
  ["branching","Приключение с выбором","Приключения",5],["team","Командная миссия","Приключения",6]
 ].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","map","count","compare","number","story","cipher"].includes(id)}));

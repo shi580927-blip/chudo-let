@@ -148,3 +148,8 @@ test("Отдельные режимы доступны только подход
   assert.equal(b.tasks.length,8);assert.ok(b.tasks.every(validateTask));
  }
 });
+
+test("Шифр доступен с диапазона 7–9 лет, а не для группы 5–6",()=>{
+ assert.throws(()=>generateBundle({age:"5-6",focus:"type:cipher"}),/возрасту/);
+ assert.ok(generateBundle({age:"7-9",focus:"type:cipher",count:5}).tasks.every(t=>t.kind==="cipher"));
+});
