@@ -1,3 +1,4 @@
+import {WORD_BANK,allowedWords} from "./words.mjs";
 // ЧУДОЛЁТ — независимый детерминированный генератор заданий.
 // Никаких запросов к серверу; идентификаторы и решения сохраняются в JSON.
 export const CATALOG = [
@@ -12,11 +13,11 @@ export const CATALOG = [
  ["compare","Больше, меньше, поровну","Математика",3],["mathpath","Математическая дорожка","Математика",5],
  ["number","Составь число","Математика",5],["shop","Магазин приключений","Математика",5],
  ["word","Собери слово","Речь",5],["syllables","Слоговый конструктор","Речь",5],
- ["story","История по порядку","Речь",4],["crossword","Кроссворд с картинками","Речь",6],
+ ["story","История по порядку","Речь",4],["crossword","Кроссворд с картинками","Речь",7],
  ["phrase","Закончи фразу","Речь",5],["cipher","Секретный шифр","Приключения",7],
  ["backpack","Волшебный рюкзак","Приключения",4],["detective","Маленький детектив","Приключения",6],
  ["branching","Приключение с выбором","Приключения",5],["team","Командная миссия","Приключения",6]
-].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","map","count","compare","number","story","cipher"].includes(id)}));
+].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","map","count","compare","number","word","syllables","story","crossword","cipher"].includes(id)}));
 
 export const THEMES = {
  clouds:{name:"Облачная почта",icon:"☁️",a:["✉️","📦","🪁","🧭","🔔","🗝️"],b:["🌈","⭐","☁️","🌙","☀️","⚡"],labels:["Почтовые находки","Небесные чудеса"]},
@@ -221,9 +222,98 @@ const CIPHER_WORDS={
 const CIPHER_ALPHABET=[..."АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"];
 const CIPHER_SYMBOLS=[..."◆●▲■★✿✦☂☾☀♣♠♥⬟⬢✚✱◉◇▽♜⚑☁"];
 
+// Проверяем пересечения реального кроссворда с иллюстрированными подсказками.
+// Вертикальное слово пересекают два различных горизонтальных слова на разных строках.
+function makeCrossword(theme,age,r){
+ const pool=shuffle(allowedWords(theme,4,age>=10?10:8),r);
+ for(const down of pool.filter(x=>x.word.length>=5)){
+  const acrossWords=shuffle(pool.filter(x=>x!==down&&x.word.length>=4&&x.word.length<=8),r);
+  const options=[];
+  for(const candidate of acrossWords)for(let v=0;v<down.word.length;v++){
+   for(let h=0;h<candidate.word.length;h++){
+    if(down.word[v]===candidate.word[h])options.push({entry:candidate,v,h});
+   }
+  }
+  const choices=shuffle(options,r);
+  for(const first of choices)for(const second of choices){
+   if(first.entry.word===second.entry.word||Math.abs(first.v-second.v)<2)continue;
+   const left=Math.min(10-first.h,10-second.h,10);
+   const right=Math.max(10-first.h+first.entry.word.length-1,10-second.h+second.entry.word.length-1,10);
+   const cols=right-left+1,rows=down.word.length;
+   if(cols>12||rows>10||cols<5)continue;
+   const vertical={word:down.word,icon:down.icon,orientation:"down",row:0,col:10-left};
+   const firstAcross={word:first.entry.word,icon:first.entry.icon,orientation:"across",row:first.v,col:10-first.h-left};
+   const secondAcross={word:second.entry.word,icon:second.entry.icon,orientation:"across",row:second.v,col:10-second.h-left};
+   const entries=[vertical,firstAcross,secondAcross].sort((a,b)=>a.row-b.row||a.col-b.col);
+   const solution=Array(rows*cols).fill(null),occupancy=Array(rows*cols).fill(0);
+   let valid=true;
+   for(const entry of entries){
+    for(let i=0;i<entry.word.length;i++){
+     const row=entry.row+(entry.orientation==="down"?i:0);
+     const col=entry.col+(entry.orientation==="across"?i:0);
+     if(row>=rows||col>=cols){valid=false;break;}
+     const idx=row*cols+col,letter=entry.word[i];
+     if(solution[idx]!==null&&solution[idx]!==letter){valid=false;break;}
+     solution[idx]=letter;occupancy[idx]++;
+    }
+   }
+   if(!valid||occupancy.filter(x=>x===2).length!==2||occupancy.some(x=>x>2))continue;
+   let next=1;
+   const numbered=entries.map(ent=>({...ent,number:next++}));
+   return {rows,cols,entries:numbered,solution,grid:solution.map(x=>x===null?null:"")};
+  }
+ }
+ throw new Error("Для темы не удалось построить проверенный кроссворд");
+}
+export function validateCrossword(t){
+ if(!Number.isInteger(t.rows)||!Number.isInteger(t.cols)||t.rows<5||t.rows>10||t.cols<5||t.cols>12||!Array.isArray(t.entries)||t.entries.length!==3)return false;
+ if(!Array.isArray(t.solution)||!Array.isArray(t.grid)||t.solution.length!==t.rows*t.cols||t.grid.length!==t.solution.length)return false;
+ const themeWords=WORD_BANK[t.theme]??[],lookup=new Map(themeWords.map(x=>[x.word,x.icon]));
+ const built=Array(t.rows*t.cols).fill(null),used=Array(t.rows*t.cols).fill(0);
+ const directions=t.entries.map(e=>e.orientation);
+ if(directions.filter(x=>x==="across").length!==2||directions.filter(x=>x==="down").length!==1)return false;
+ if(new Set(t.entries.map(x=>x.word)).size!==3||new Set(t.entries.map(x=>x.number)).size!==3)return false;
+ for(const item of t.entries){
+  if(!Number.isInteger(item.number)||item.number<1||item.number>3||lookup.get(item.word)!==item.icon)return false;
+  if(!Number.isInteger(item.row)||!Number.isInteger(item.col)||item.row<0||item.col<0)return false;
+  for(let i=0;i<item.word.length;i++){
+   const row=item.row+(item.orientation==="down"?i:0);
+   const col=item.col+(item.orientation==="across"?i:0);
+   if(row>=t.rows||col>=t.cols)return false;
+   const idx=row*t.cols+col,letter=item.word[i];
+   if(built[idx]!==null&&built[idx]!==letter)return false;
+   built[idx]=letter;used[idx]++;
+  }
+ }
+ return built.every((x,i)=>x===t.solution[i]&&t.grid[i]===(x===null?null:""))&&used.filter(x=>x===2).length===2&&used.every(x=>x<=2);
+}
+function shuffledTiles(parts,r){
+ let shuffled=shuffle(parts,r);
+ if(shuffled.join("")===parts.join("")){
+  // Даже для двух слогов не раскрываем готовую последовательность.
+  shuffled=parts.slice(1).concat(parts[0]);
+ }
+ return shuffled;
+}
+
 function taskFor(kind,age,theme,r){
  const t=THEMES[theme]||THEMES.clouds,combined=[...t.a,...t.b],short=age<=3;
  let q={kind,title:CATALOG.find(e=>e.id===kind)?.name??kind,theme,age};
+ if(kind==="word"){
+  const pool=allowedWords(theme,4,age<=5?6:age<=7?8:10);
+  const entry=pick(pool,r);
+  const tiles=shuffledTiles([...entry.word],r);
+  return {...q,prompt:"Собери название предмета из перемешанных букв.",icon:entry.icon,tiles,answer:entry.word};
+ }
+ if(kind==="syllables"){
+  const candidates=allowedWords(theme,4,age<=5?8:10).filter(w=>w.syllables.length>=(age>=7?3:2)&&new Set(w.syllables).size===w.syllables.length);
+  const entry=pick(candidates,r);
+  const tiles=shuffledTiles(entry.syllables,r);
+  return {...q,prompt:"Собери название предмета из слогов в правильном порядке.",icon:entry.icon,tiles,answer:entry.word};
+ }
+ if(kind==="crossword"){
+  return {...q,prompt:"Разгадай слова по картинкам. Буквы в пересечениях должны совпадать.",...makeCrossword(theme,age,r)};
+ }
  if(kind==="map"){
   const size=age>=7?5:4,steps=age>=10?7:age>=7?6:4;
   const route=makeMapRoute(size,steps,r),goal=route.path.at(-1);
@@ -337,6 +427,16 @@ export function makeTask(kind,age="5-6",theme="clouds",seed=1){
 }
 export function validateTask(t){
  if(!t||!READY_IDS.includes(t.kind))return false;
+ if(t.kind==="word"||t.kind==="syllables"){
+  if(typeof t.answer!=="string"||!Array.isArray(t.tiles)||typeof t.icon!=="string")return false;
+  const dictionary=WORD_BANK[t.theme]??[];
+  const entry=dictionary.find(x=>x.word===t.answer&&x.icon===t.icon);
+  if(!entry||t.tiles.join("")===t.answer||t.tiles.length!==(t.kind==="word"?t.answer.length:entry.syllables.length))return false;
+  const original=t.kind==="word"?[...t.answer]:entry.syllables;
+  const a=t.tiles.slice().sort(),b=original.slice().sort();
+  return a.every((x,i)=>x===b[i])&&a.length===b.length&&(t.kind!=="syllables"||t.tiles.length>=2);
+ }
+ if(t.kind==="crossword")return validateCrossword(t);
  if(t.kind==="map"){
   if(!Number.isInteger(t.size)||![4,5].includes(t.size)||!Array.isArray(t.path)||!Array.isArray(t.icons)||t.icons.length!==t.size*t.size)return false;
   const traced=traceMap(t);
@@ -404,6 +504,13 @@ export function validateTask(t){
  return false;
 }
 export function checkAnswer(t,value){
+ if(t.kind==="word"||t.kind==="syllables"){
+  if(!Array.isArray(value)||value.length!==t.tiles.length||new Set(value).size!==value.length)return false;
+  return value.every(i=>Number.isInteger(i)&&i>=0&&i<t.tiles.length)&&value.map(i=>t.tiles[i]).join("")===t.answer;
+ }
+ if(t.kind==="crossword"){
+  return Array.isArray(value)&&value.length===t.solution.length&&value.every((v,i)=>v===t.solution[i]);
+ }
  if(t.kind==="map")return typeof value==="string"&&value===t.answer;
  if(t.kind==="cipher")return typeof value==="string"&&value===t.answer;
  if(t.kind==="number")return typeof value==="string"&&value===t.answer;
@@ -417,6 +524,8 @@ export function checkAnswer(t,value){
  return String(value)===String(t.answer);
 }
 export function solutionText(t){
+ if(t.kind==="word"||t.kind==="syllables")return "Слово: "+t.answer;
+ if(t.kind==="crossword")return t.entries.map(x=>x.number+". "+x.word).join("; ");
  if(t.kind==="map"){const last=t.path.at(-1);return "Маршрут: "+t.directions.join(" ")+"; финиш (столбец "+(last%t.size+1)+", строка "+(Math.floor(last/t.size)+1)+"): "+t.answer;}
  if(t.kind==="cipher")return "Слово: "+t.answer;
  if(t.kind==="number")return t.hundreds+"×100 + "+t.tens+"×10 + "+t.ones+" = "+t.value;
@@ -434,7 +543,7 @@ export function solutionText(t){
 export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,focus="mixed"}={}){
  count=Math.max(1,Math.min(20,Number(count)||7));
  const eligible=(ids)=>ids.filter(id=>CATALOG.find(c=>c.id===id).minAge<=resolveAge(age));
- const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","map","compare","number","cipher"]:focus==="story"?["find","sort","sequence","maze","map","count","pair","story","cipher"]:READY_IDS;
+ const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","map","compare","number","cipher","crossword"]:focus==="story"?["find","sort","sequence","maze","map","count","pair","story","cipher","word","syllables","crossword"]:READY_IDS;
  const pool=eligible(candidates);
  if(pool.length===0)throw new Error("Эта механика пока не подходит выбранному возрасту.");
  const r=seeded(seed),tasks=Array.from({length:count},(_,i)=>makeTask(pool[i%pool.length],age,theme,integer(r,2**30)+i));
