@@ -21,14 +21,16 @@ test("Все 12 предметов Облачной почты привязан�
   assert.doesNotMatch(xml,/<script\b|<foreignObject\b|href\s*=\s*["']https?:/i);
  }
 });
-test("В других мирах остаются прежние значки",()=>{
+test("По умолчанию во всех мирах сохранены объёмные emoji альфы",()=>{
  assert.equal(artAssetPath("✉️","forest"),null);
- assert.match(renderSymbol("✉️","forest"),/art-emoji/);
- assert.match(renderSymbol("🦊","clouds"),/art-emoji/);
+ assert.equal(renderSymbol("✉️","forest"),"✉️");
+ assert.equal(renderSymbol("✉️","clouds"),"✉️");
+ assert.equal(renderSymbol("🦊","clouds"),"🦊");
 });
 test("Наличие иллюстраций не меняет игровые ответы",()=>{
  const bundle=generateBundle({age:"7-9",theme:"clouds",count:20,seed:2077});
  assert.ok(bundle.tasks.every(validateTask));
- assert.match(renderSymbol("⭐","clouds"),/star\.svg/);
- assert.match(renderSymbol("⭐","clouds"),/Звезда/);
+ assert.equal(renderSymbol("⭐","clouds"),"⭐");
+ assert.match(renderSymbol("⭐","clouds","illustrated"),/star\.svg/);
+ assert.match(renderSymbol("⭐","clouds","illustrated"),/Звезда/);
 });

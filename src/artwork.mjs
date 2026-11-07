@@ -20,7 +20,12 @@ export function artAssetPath(symbol,theme){
  const item=ART_ASSETS[theme]?.[symbol];
  return item?"./assets/items/clouds/"+item.id+".svg":null;
 }
-export function renderSymbol(symbol,theme){
+// Approved default: the original colourful platform emoji used in Alpha 0.1.
+// Experimental flat SVGs remain accessible for comparison, never activated by default.
+export function renderSymbol(symbol,theme,variant="classic"){
  const item=ART_ASSETS[theme]?.[symbol];
- return item?'<img class="art-image" src="'+artAssetPath(symbol,theme)+'" alt="'+escape(item.label)+'" loading="eager" decoding="async">':'<span class="art-emoji">'+escape(symbol)+'</span>';
+ if(variant==="illustrated"&&item){
+  return '<img class="art-image" src="'+artAssetPath(symbol,theme)+'" alt="'+escape(item.label)+'" loading="eager" decoding="async">';
+ }
+ return escape(symbol);
 }
