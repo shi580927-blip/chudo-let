@@ -77,3 +77,58 @@ test("Числовой конструктор: проверка неполног
  click({action:"check"});
  assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
 });
+
+test("Собери слово: вывод перемешанных карточек, сборка и проверка",()=>{
+ const t=setup("type:word","7-9");
+ assert.match(el("activity").innerHTML,/word-clue/);
+ assert.match(el("activity").innerHTML,/word-tiles/);
+ assert.doesNotMatch(el("activity").innerHTML,new RegExp(">"+t.answer+"<"));
+ const chosen=[];
+ for(const letter of t.answer){
+  const i=t.tiles.findIndex((x,j)=>x===letter&&!chosen.includes(j));
+  assert.ok(i>=0);chosen.push(i);
+ }
+ for(const i of chosen.slice(0,2))click({action:"tilePick",value:String(i)});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Сначала заполни все буквы или цифры/);
+ for(const i of chosen.slice(2))click({action:"tilePick",value:String(i)});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});
+test("Слоговый конструктор: слоги выбираются без повторов, слово собирается",()=>{
+ const t=setup("type:syllables","7-9");
+ const word=t.answer;
+ const dictionary=[...t.tiles];
+ assert.ok(dictionary.length>=3);
+ const chosen=[];
+ // Перебор коротких перестановок проверяет выбранное слово без доступа к скрытому ключу UI.
+ const walk=(remaining,indices)=>{
+  if(indices.length===dictionary.length)return indices.map(i=>dictionary[i]).join("")===word?indices:null;
+  for(const i of remaining){
+   const result=walk(remaining.filter(x=>x!==i),[...indices,i]);
+   if(result)return result;
+  }
+  return null;
+ };
+ const answer=walk(dictionary.map((_,i)=>i),[]);
+ assert.ok(answer);
+ for(const i of answer)click({action:"tilePick",value:String(i)});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});
+test("Кроссворд: ввод по клеткам, частичное поле и правильная проверка",()=>{
+ const t=setup("type:crossword","7-9");
+ assert.match(el("activity").innerHTML,/crossword-grid/);
+ assert.match(el("activity").innerHTML,/crossword-clues/);
+ const i=t.solution.findIndex(x=>x!==null);
+ click({action:"crosswordCell",cell:String(i)});
+ click({action:"crosswordLetter",value:t.solution[i]});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Заполни все белые клетки кроссворда/);
+ for(let k=0;k<t.solution.length;k++)if(t.solution[k]!==null&&k!==i){
+  click({action:"crosswordCell",cell:String(k)});
+  click({action:"crosswordLetter",value:t.solution[k]});
+ }
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});

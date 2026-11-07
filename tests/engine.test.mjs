@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer,countSudokuSolutions,validSudokuSolution,traceMap} from "../src/engine.mjs";
-test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,17);});
+import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer,countSudokuSolutions,validSudokuSolution,traceMap,validateCrossword} from "../src/engine.mjs";
+import {WORD_BANK} from "../src/words.mjs";
+test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,20);});
 test("Генераторы всех тем и возрастов гарантированно корректны",()=>{
  for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(const kind of READY_IDS)for(let seed=0;seed<30;seed++){
   const t=makeTask(kind,age,theme,seed);
@@ -14,7 +15,7 @@ test("Одинаковые параметры порождают одинако�
  const a=generateBundle({seed:42,count:20}),b=generateBundle({seed:42,count:20});
  assert.deepEqual(a,b);
 });
-test("В неготовую механику попасть нельзя",()=>assert.throws(()=>makeTask("crossword"),/ещё не готов/));
+test("В неготовую механику попасть нельзя",()=>assert.throws(()=>makeTask("puzzle"),/ещё не готов/));
 test("Ошибочные ответы отбрасываются",()=>{
  const m=makeTask("maze","7-9","clouds",10);assert.equal(checkAnswer(m,[0,m.size*m.size-1]),false);
  const s=makeTask("sort","5-6","forest",15);assert.equal(checkAnswer(s,s.items.map(x=>1-x.group)),false);
@@ -152,4 +153,71 @@ test("Отдельные режимы доступны только подход
 test("Шифр доступен с диапазона 7–9 лет, а не для группы 5–6",()=>{
  assert.throws(()=>generateBundle({age:"5-6",focus:"type:cipher"}),/возрасту/);
  assert.ok(generateBundle({age:"7-9",focus:"type:cipher",count:5}).tasks.every(t=>t.kind==="cipher"));
+});
+
+test("Слова: 6 миров × 4 возраста × 100 вариантов; перемешанные буквы, правильный ответ единственный",()=>{
+ for(const theme of Object.keys(THEMES))
+ for(const age of ["3-4","5-6","7-9","10-12"])
+ for(let seed=0;seed<100;seed++){
+  const t=makeTask("word",age,theme,seed);
+  assert.equal(validateTask(t),true,JSON.stringify({theme,age,seed}));
+  assert.notEqual(t.tiles.join(""),t.answer);
+  assert.ok(WORD_BANK[theme].some(item=>item.word===t.answer&&item.icon===t.icon));
+  const chosen=[];
+  for(const letter of t.answer){const index=t.tiles.findIndex((tile,i)=>tile===letter&&!chosen.includes(i));assert.ok(index>=0);chosen.push(index);}
+  assert.equal(checkAnswer(t,chosen),true);
+  assert.equal(checkAnswer(t,chosen.slice(0,-1)),false);
+  assert.equal(checkAnswer(t,[...chosen.slice(0,-1),chosen[0]]),false);
+  assert.equal(validateTask({...t,tiles:[...t.answer]}),false);
+ }
+});
+test("Слоги: только редакционно заданная разбивка, порядок перемешан, без неоднозначных карточек",()=>{
+ for(const theme of Object.keys(THEMES))
+ for(const age of ["3-4","5-6","7-9","10-12"])
+ for(let seed=0;seed<100;seed++){
+  const t=makeTask("syllables",age,theme,seed);
+  assert.equal(validateTask(t),true);
+  const entry=WORD_BANK[theme].find(x=>x.word===t.answer);
+  assert.ok(entry&&entry.syllables.join("")===t.answer);
+  assert.equal(new Set(t.tiles).size,t.tiles.length);
+  assert.notEqual(t.tiles.join(""),t.answer);
+  const chosen=entry.syllables.map(s=>t.tiles.indexOf(s));
+  assert.equal(checkAnswer(t,chosen),true);
+  assert.equal(checkAnswer(t,chosen.slice(1)),false);
+  assert.equal(checkAnswer(t,[...chosen,chosen[0]]),false);
+  assert.equal(validateTask({...t,tiles:t.tiles.slice(1)}),false);
+ }
+});
+test("Кроссворд: три слова, два фактических пересечения и все пустые клетки",()=>{
+ for(const theme of Object.keys(THEMES))
+ for(const age of ["3-4","5-6","7-9","10-12"])
+ for(let seed=0;seed<100;seed++){
+  const t=makeTask("crossword",age,theme,seed);
+  assert.ok(validateTask(t),JSON.stringify({theme,age,seed}));
+  assert.equal(validateCrossword(t),true);
+  assert.equal(t.entries.length,3);
+  assert.equal(t.entries.filter(x=>x.orientation==="down").length,1);
+  assert.equal(t.entries.filter(x=>x.orientation==="across").length,2);
+  assert.ok(t.grid.some(x=>x===null));
+  assert.ok(t.grid.some(x=>x===""));
+  assert.equal(checkAnswer(t,t.solution),true);
+  const wrong=t.solution.slice(),at=wrong.findIndex(x=>x!==null);
+  wrong[at]="Ф";
+  if(wrong[at]===t.solution[at])wrong[at]="А";
+  assert.equal(checkAnswer(t,wrong),false);
+  const bad=t.entries.map(e=>({...e}));
+  bad[0].word="ЗЗЗЗЗЗ";
+  assert.equal(validateCrossword({...t,entries:bad}),false);
+ }
+});
+test("Возраст: слово и слоги от 5, кроссворд от 7",()=>{
+ for(const kind of ["word","syllables","crossword"]){
+  assert.throws(()=>generateBundle({age:"3-4",focus:"type:"+kind}),/возрасту/);
+ }
+ assert.throws(()=>generateBundle({age:"5-6",focus:"type:crossword"}),/возрасту/);
+ for(const kind of ["word","syllables","crossword"]){
+  const b=generateBundle({age:"7-9",focus:"type:"+kind,count:9,seed:19});
+  assert.equal(b.tasks.length,9);
+  assert.ok(b.tasks.every(t=>t.kind===kind&&validateTask(t)));
+ }
 });
