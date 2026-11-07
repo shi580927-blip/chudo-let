@@ -99,7 +99,7 @@ test("Слоговый конструктор: слоги выбираются �
  const t=setup("type:syllables","7-9");
  const word=t.answer;
  const dictionary=[...t.tiles];
- assert.ok(dictionary.length>=3);
+ assert.ok(dictionary.length>=2);
  const chosen=[];
  // Перебор коротких перестановок проверяет выбранное слово без доступа к скрытому ключу UI.
  const walk=(remaining,indices)=>{

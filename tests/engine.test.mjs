@@ -221,3 +221,33 @@ test("Возраст: слово и слоги от 5, кроссворд от 7
   assert.ok(b.tasks.every(t=>t.kind===kind&&validateTask(t)));
  }
 });
+
+test("Слоговый конструктор: 20 заданий не повторяют слова подряд, через 1 или 2",()=>{
+ for(const theme of Object.keys(THEMES))
+ for(const age of ["5-6","7-9","10-12"])
+ for(let seed=0;seed<45;seed++){
+  const b=generateBundle({age,theme,count:20,focus:"type:syllables",seed});
+  const words=b.tasks.map(t=>t.answer);
+  assert.ok(b.tasks.every(validateTask));
+  for(let i=0;i<words.length;i++)for(let gap=1;gap<=3&&i+gap<words.length;gap++){
+   assert.notEqual(words[i],words[i+gap],JSON.stringify({theme,age,seed,i,gap,words}));
+  }
+  assert.deepEqual(b,generateBundle({age,theme,count:20,focus:"type:syllables",seed}));
+ }
+});
+test("Слоговый конструктор: до исчерпания словаря каждое слово новое",()=>{
+ for(const theme of Object.keys(THEMES))
+ for(const age of ["5-6","7-9","10-12"]){
+  const b=generateBundle({age,theme,count:20,focus:"type:syllables",seed:20261107});
+  const maxUnique=new Set(b.tasks.map(t=>t.answer)).size;
+  assert.ok(maxUnique>=8,theme+" "+age);
+  assert.equal(new Set(b.tasks.slice(0,maxUnique).map(t=>t.answer)).size,maxUnique,theme+" "+age);
+ }
+});
+test("Речевые наборы не дублируют слова у соседних заданий",()=>{
+ for(const theme of Object.keys(THEMES)){
+  const b=generateBundle({age:"7-9",theme,count:20,focus:"story",seed:42});
+  const words=b.tasks.filter(t=>t.kind==="word"||t.kind==="syllables").map(t=>t.answer);
+  for(let i=1;i<words.length;i++)assert.notEqual(words[i],words[i-1],theme);
+ }
+});

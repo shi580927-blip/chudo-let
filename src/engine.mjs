@@ -296,18 +296,28 @@ function shuffledTiles(parts,r){
  return shuffled;
 }
 
-function taskFor(kind,age,theme,r){
+function wordChoices(kind,theme,age){
+ if(kind==="word")return allowedWords(theme,4,age<=5?6:age<=7?8:10);
+ if(kind==="syllables")return allowedWords(theme,4,age<=5?8:10)
+  .filter(w=>w.syllables.length>=2&&new Set(w.syllables).size===w.syllables.length);
+ return [];
+}
+function taskFor(kind,age,theme,r,selectedWord=null){
  const t=THEMES[theme]||THEMES.clouds,combined=[...t.a,...t.b],short=age<=3;
  let q={kind,title:CATALOG.find(e=>e.id===kind)?.name??kind,theme,age};
  if(kind==="word"){
-  const pool=allowedWords(theme,4,age<=5?6:age<=7?8:10);
-  const entry=pick(pool,r);
+  const pool=wordChoices(kind,theme,age);
+  const entry=selectedWord===null?pick(pool,r):pool.find(w=>w.word===selectedWord);
+  if(!entry)throw new Error("Неподходящее слово для задания");
   const tiles=shuffledTiles([...entry.word],r);
   return {...q,prompt:"Собери название предмета из перемешанных букв.",icon:entry.icon,tiles,answer:entry.word};
  }
  if(kind==="syllables"){
-  const candidates=allowedWords(theme,4,age<=5?8:10).filter(w=>w.syllables.length>=(age>=7?3:2)&&new Set(w.syllables).size===w.syllables.length);
-  const entry=pick(candidates,r);
+  // Для старших не ограничиваем набор только 3-сложными словами:
+  // это искусственно сокращало словарь до 3–4 вариантов и вызывало повторы.
+  const candidates=wordChoices(kind,theme,age);
+  const entry=selectedWord===null?pick(candidates,r):candidates.find(w=>w.word===selectedWord);
+  if(!entry)throw new Error("Неподходящее слово для задания");
   const tiles=shuffledTiles(entry.syllables,r);
   return {...q,prompt:"Собери название предмета из слогов в правильном порядке.",icon:entry.icon,tiles,answer:entry.word};
  }
@@ -421,9 +431,9 @@ function taskFor(kind,age,theme,r){
  }
  throw new Error("Механика ещё не реализована: "+kind);
 }
-export function makeTask(kind,age="5-6",theme="clouds",seed=1){
+export function makeTask(kind,age="5-6",theme="clouds",seed=1,selectedWord=null){
  if(!READY_IDS.includes(kind))throw new Error("Механика в каталоге, но генератор ещё не готов: "+kind);
- return {...taskFor(kind,resolveAge(age),theme,seeded(seed)),id:kind+"-"+seed,seed};
+ return {...taskFor(kind,resolveAge(age),theme,seeded(seed),selectedWord),id:kind+"-"+seed,seed};
 }
 export function validateTask(t){
  if(!t||!READY_IDS.includes(t.kind))return false;
@@ -546,7 +556,28 @@ export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,f
  const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","map","compare","number","cipher","crossword"]:focus==="story"?["find","sort","sequence","maze","map","count","pair","story","cipher","word","syllables","crossword"]:READY_IDS;
  const pool=eligible(candidates);
  if(pool.length===0)throw new Error("Эта механика пока не подходит выбранному возрасту.");
- const r=seeded(seed),tasks=Array.from({length:count},(_,i)=>makeTask(pool[i%pool.length],age,theme,integer(r,2**30)+i));
+ const r=seeded(seed),tasks=[],cycles=new Map(),recentWords=[];
+ for(let i=0;i<count;i++){
+  const kind=pool[i%pool.length],taskSeed=integer(r,2**30)+i;
+  let selectedWord=null;
+  if(kind==="word"||kind==="syllables"){
+   let cycle=cycles.get(kind);
+   if(!cycle?.length){
+    const choices=wordChoices(kind,theme,resolveAge(age));
+    if(choices.length===0)throw new Error("Словарь выбранной темы пуст.");
+    cycle=shuffle(choices,r);
+    cycles.set(kind,cycle);
+   }
+   // Сначала используем все допустимые слова, затем начинаем новый цикл.
+   // Учитываем и соседние задания другого речевого типа.
+   const index=cycle.findIndex(x=>!recentWords.includes(x.word));
+   const item=cycle.splice(index>=0?index:0,1)[0];
+   selectedWord=item.word;
+   recentWords.push(selectedWord);
+   if(recentWords.length>3)recentWords.shift();
+  }
+  tasks.push(makeTask(kind,age,theme,taskSeed,selectedWord));
+ }
  if(!tasks.every(validateTask))throw new Error("Автопроверка заданий не пройдена");
  return {schema:"chudolet.bundle.v1",title:"Приключение: "+(THEMES[theme]?.name||THEMES.clouds.name),age,theme,count,seed,focus,created:"",tasks};
 }
