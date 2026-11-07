@@ -30,7 +30,7 @@ function mazeSvg(t,print=false){
 function board(t,print=false){
  const pick=(opts)=>pickButtons(opts,print);
  if(t.kind==="find"||t.kind==="count")return '<div class="game-label">Ищи значок '+t.target+' среди других</div>'+emojiGrid(t.cells, t.cells.length<=12)+pick(t.options);
- if(t.kind==="shadow")return '<p class="game-label">Узнай предмет по силуэту</p><div class="question-mark"><span>'+t.target+'</span></div>'+pick(t.options);
+ if(t.kind==="shadow")return '<p class="game-label">Узнай предмет по силуэту</p><div class="question-mark" role="img" aria-label="Чёрный силуэт предмета"><span aria-hidden="true">'+t.target+'</span></div>'+pick(t.options);
  if(t.kind==="odd")return '<div class="choice-row">'+t.cells.map((c,i)=>'<button type="button" class="pick '+(!print&&state.answer===i?'selected':'')+'"'+(print?'':' data-action="pick" data-value="'+i+'"')+'>'+c+'</button>').join("")+'</div>';
  if(t.kind==="sequence")return '<div class="series">'+t.shown.map(x=>'<span>'+x+'</span>').join("")+'<span>?</span></div>'+pick(t.options);
  if(t.kind==="sort"){
@@ -42,7 +42,7 @@ function board(t,print=false){
  if(t.kind==="pair")return '<p class="game-label">Подбери подходящую пару</p><div class="series"><span>'+t.target+'</span><span>+</span><span>?</span></div>'+pick(t.options);
  if(t.kind==="maze"){
   const path=Array.isArray(state.answer)?state.answer:[0],at=path.at(-1),possible=neighbors(t,at),last=at===t.size*t.size-1;
-  return mazeSvg(t,print)+(print?'':'<p class="game-label">'+(last?'Ты добрался до звезды!':'Нажимай на соседние клетки без стены между ними.')+'</p><div class="maze-actions">'+possible.map(n=>'<button class="ghost" data-action="move" data-cell="'+n+'">Перейти '+(n===at+1?"→":n===at-1?"←":n===at+t.size?"↓":"↑")+' · '+(n+1)+'</button>').join("")+'</div>');
+  return (print?'':'<p class="game-label">В этом лабиринте '+t.routeCount+' маршрута. Выбирай любой!</p>')+mazeSvg(t,print)+(print?'':'<p class="game-label">'+(last?'Ты добрался до звезды!':'Нажимай на соседние клетки без стены между ними.')+'</p><div class="maze-actions">'+possible.map(n=>'<button class="ghost" data-action="move" data-cell="'+n+'">Перейти '+(n===at+1?"→":n===at-1?"←":n===at+t.size?"↓":"↑")+' · '+(n+1)+'</button>').join("")+'</div>');
  }
  if(t.kind==="compare")return '<div class="compare-board"><div class="compare-group">'+Array(t.left).fill(t.icon).join(' ')+'</div><span class="compare-sign">?</span><div class="compare-group">'+Array(t.right).fill(t.icon).join(' ')+'</div></div>'+pick(t.options);
  if(t.kind==="story")return '<div class="story-options">'+t.cards.map((c,i)=>{
