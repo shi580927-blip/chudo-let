@@ -1,10 +1,12 @@
 import {CATALOG,THEMES,generateBundle,checkAnswer,solutionText,neighbors,solveMaze} from "./engine.mjs";
+import {renderSymbol} from "./artwork.mjs";
 const $=id=>document.getElementById(id);
 const state={bundle:generateBundle(),index:0,answer:null,checked:false,hint:false,done:new Set(),view:"builder"};
 const escapeHtml=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const draw=(symbol,theme=state.bundle.theme)=>renderSymbol(symbol,theme);
 /** Поднимаем искомый предмет до размера отдельной иллюстрации, включая телефон и печать. */
 function targetBadge(target,label="Искомый предмет"){
- return '<span class="target-badge" role="img" aria-label="'+escapeHtml(label)+'">'+escapeHtml(target)+'</span>';
+ return '<span class="target-badge" role="img" aria-label="'+escapeHtml(label)+'">'+draw(target)+'</span>';
 }
 function promptHTML(t){
  let text=escapeHtml(t.prompt);
@@ -18,11 +20,11 @@ function promptHTML(t){
 }
 function task(){return state.bundle.tasks[state.index];}
 function reset(){state.answer=null;state.checked=false;state.hint=false;}
-function emojiGrid(arr,compact=false){
- return '<div class="emoji-grid'+(compact?' compact':'')+'">'+arr.map(x=>'<div class="emoji-tile">'+x+'</div>').join("")+'</div>';
+function emojiGrid(arr,compact=false,theme=state.bundle.theme){
+ return '<div class="emoji-grid'+(compact?' compact':'')+'">'+arr.map(x=>'<div class="emoji-tile">'+draw(x,theme)+'</div>').join("")+'</div>';
 }
-function pickButtons(options,print=false){
- return '<div class="choice-row">'+options.map((o,i)=>'<button type="button" class="pick'+(!print&&state.answer!==null&&String(state.answer)===String(o)?' selected':'')+'"'+(print?' tabindex="-1"':' data-action="pick" data-value="'+escapeHtml(o)+'"')+'>'+escapeHtml(o)+'</button>').join("")+'</div>';
+function pickButtons(options,print=false,theme=state.bundle.theme){
+ return '<div class="choice-row">'+options.map(o=>'<button type="button" class="pick'+(!print&&state.answer!==null&&String(state.answer)===String(o)?' selected':'')+'"'+(print?' tabindex="-1"':' data-action="pick" data-value="'+escapeHtml(o)+'"')+'>'+draw(o,theme)+'</button>').join("")+'</div>';
 }
 function mazeSvg(t,print=false){
  const N=t.size,side=420,u=side/N,has=(a,b)=>t.edges.some(e=>(e[0]===a&&e[1]===b)||(e[1]===a&&e[0]===b));
@@ -42,26 +44,26 @@ function mazeSvg(t,print=false){
  return '<svg class="maze" viewBox="-6 -6 432 432" role="img" aria-label="Лабиринт от старта в верхнем левом углу до финиша в нижнем правом">'+walls+trail+'<circle cx="'+finish[0]+'" cy="'+finish[1]+'" r="'+(u*.23)+'" fill="#f2c55e"/><text x="'+finish[0]+'" y="'+(finish[1]+u*.12)+'" text-anchor="middle" font-size="'+(u*.4)+'">★</text><circle cx="'+last[0]+'" cy="'+last[1]+'" r="'+(u*.27)+'" fill="#ecf99f" stroke="#46405b" stroke-width="2"/><text x="'+last[0]+'" y="'+(last[1]+u*.13)+'" text-anchor="middle" font-size="'+(u*.48)+'">🐾</text>'+tiles+'</svg>';
 }
 function board(t,print=false){
- const pick=(opts)=>pickButtons(opts,print);
- if(t.kind==="find"||t.kind==="count")return '<div class="game-label">Ищи значок '+targetBadge(t.target)+' среди других</div>'+emojiGrid(t.cells, t.cells.length<=12)+pick(t.options);
- if(t.kind==="shadow")return '<p class="game-label">Узнай предмет по силуэту</p><div class="question-mark" role="img" aria-label="Чёрный силуэт предмета"><span aria-hidden="true">'+t.target+'</span></div>'+pick(t.options);
- if(t.kind==="odd")return '<div class="choice-row">'+t.cells.map((c,i)=>'<button type="button" class="pick '+(!print&&state.answer===i?'selected':'')+'"'+(print?'':' data-action="pick" data-value="'+i+'"')+'>'+c+'</button>').join("")+'</div>';
- if(t.kind==="sequence")return '<div class="series">'+t.shown.map(x=>'<span>'+x+'</span>').join("")+'<span>?</span></div>'+pick(t.options);
+ const pick=(opts)=>pickButtons(opts,print,t.theme);
+ if(t.kind==="find"||t.kind==="count")return '<div class="game-label">Ищи значок '+targetBadge(t.target)+' среди других</div>'+emojiGrid(t.cells, t.cells.length<=12,t.theme)+pick(t.options);
+ if(t.kind==="shadow")return '<p class="game-label">Узнай предмет по силуэту</p><div class="question-mark" role="img" aria-label="Чёрный силуэт предмета"><span aria-hidden="true">'+draw(t.target,t.theme)+'</span></div>'+pick(t.options);
+ if(t.kind==="odd")return '<div class="choice-row">'+t.cells.map((c,i)=>'<button type="button" class="pick '+(!print&&state.answer===i?'selected':'')+'"'+(print?'':' data-action="pick" data-value="'+i+'"')+'>'+draw(c,t.theme)+'</button>').join("")+'</div>';
+ if(t.kind==="sequence")return '<div class="series">'+t.shown.map(x=>'<span>'+draw(x,t.theme)+'</span>').join("")+'<span>?</span></div>'+pick(t.options);
  if(t.kind==="sort"){
-  if(print)return '<div class="game-label">'+t.labels.join('  /  ')+'</div>'+emojiGrid(t.items.map(x=>x.icon),true)+'<p>Подпиши для каждого предмета правильную группу.</p>';
+  if(print)return '<div class="game-label">'+t.labels.join('  /  ')+'</div>'+emojiGrid(t.items.map(x=>x.icon),true,t.theme)+'<p>Подпиши для каждого предмета правильную группу.</p>';
   const answered=state.answer||[],current=t.items[answered.length];
   if(!current)return '<div class="sort-cards"><div class="sort-icon">🎉</div><b>Все предметы распределены!</b><p>Нажми «Проверить».</p></div>';
-  return '<div class="sort-cards"><p class="sort-progress">Предмет '+(answered.length+1)+' из '+t.items.length+'</p><div class="sort-icon">'+current.icon+'</div><p>В какую корзину положить?</p></div><div class="choice-row"><button class="pick word-choice" data-action="sort" data-value="0">① '+t.labels[0]+'</button><button class="pick word-choice" data-action="sort" data-value="1">② '+t.labels[1]+'</button></div>';
+  return '<div class="sort-cards"><p class="sort-progress">Предмет '+(answered.length+1)+' из '+t.items.length+'</p><div class="sort-icon">'+draw(current.icon,t.theme)+'</div><p>В какую корзину положить?</p></div><div class="choice-row"><button class="pick word-choice" data-action="sort" data-value="0">① '+t.labels[0]+'</button><button class="pick word-choice" data-action="sort" data-value="1">② '+t.labels[1]+'</button></div>';
  }
- if(t.kind==="pair")return '<p class="game-label">Подбери подходящую пару</p><div class="series"><span>'+t.target+'</span><span>+</span><span>?</span></div>'+pick(t.options);
+ if(t.kind==="pair")return '<p class="game-label">Подбери подходящую пару</p><div class="series"><span>'+draw(t.target,t.theme)+'</span><span>+</span><span>?</span></div>'+pick(t.options);
  if(t.kind==="maze"){
   const path=Array.isArray(state.answer)?state.answer:[0],at=path.at(-1),possible=neighbors(t,at),last=at===t.size*t.size-1;
   return (print?'':'<p class="game-label">В этом лабиринте '+t.routeCount+' маршрута. Выбирай любой!</p>')+mazeSvg(t,print)+(print?'':'<p class="game-label">'+(last?'Ты добрался до звезды!':'Нажимай на соседние клетки без стены между ними.')+'</p><div class="maze-actions">'+possible.map(n=>'<button class="ghost" data-action="move" data-cell="'+n+'">Перейти '+(n===at+1?"→":n===at-1?"←":n===at+t.size?"↓":"↑")+' · '+(n+1)+'</button>').join("")+'</div>');
  }
- if(t.kind==="compare")return '<div class="compare-board"><div class="compare-group">'+Array(t.left).fill(t.icon).join(' ')+'</div><span class="compare-sign">?</span><div class="compare-group">'+Array(t.right).fill(t.icon).join(' ')+'</div></div>'+pick(t.options);
+ if(t.kind==="compare")return '<div class="compare-board"><div class="compare-group">'+Array(t.left).fill(t.icon).map(x=>draw(x,t.theme)).join(' ')+'</div><span class="compare-sign">?</span><div class="compare-group">'+Array(t.right).fill(t.icon).map(x=>draw(x,t.theme)).join(' ')+'</div></div>'+pick(t.options);
  if(t.kind==="story")return '<div class="story-options">'+t.cards.map((c,i)=>{
  const chosen=!print&&Array.isArray(state.answer)?state.answer.indexOf(c.order):-1;
- return '<button type="button" class="story-option'+(chosen!==-1?' done':'')+'" '+(print?'':'data-action="story" data-order="'+c.order+'"')+'><span class="figure">'+c.icon+'</span><small>'+escapeHtml(c.text)+'</small>'+(chosen!==-1?'<b>Шаг '+(chosen+1)+'</b>':'')+'</button>';}).join("")+'</div>'+(print?'':'<p class="story-choice">Выбрано: '+((state.answer||[]).length)+' из 4</p>');
+ return '<button type="button" class="story-option'+(chosen!==-1?' done':'')+'" '+(print?'':'data-action="story" data-order="'+c.order+'"')+'><span class="figure">'+draw(c.icon,t.theme)+'</span><small>'+escapeHtml(c.text)+'</small>'+(chosen!==-1?'<b>Шаг '+(chosen+1)+'</b>':'')+'</button>';}).join("")+'</div>'+(print?'':'<p class="story-choice">Выбрано: '+((state.answer||[]).length)+' из 4</p>');
  return "<p>Механика пока не поддерживается.</p>";
 }
 function hintFor(t){

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+<title>Радуга</title>
+<defs><linearGradient id="rainbow-gold" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#fff7d7"/><stop offset=".55" stop-color="#ffc74d"/><stop offset="1" stop-color="#e88b35"/></linearGradient><linearGradient id="rainbow-violet" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#f5e6ff"/><stop offset=".55" stop-color="#a676e7"/><stop offset="1" stop-color="#6a34b8"/></linearGradient><linearGradient id="rainbow-sky" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#f1fdff"/><stop offset=".55" stop-color="#9edbff"/><stop offset="1" stop-color="#36a9cc"/></linearGradient><linearGradient id="rainbow-coral" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffe9c7"/><stop offset=".55" stop-color="#ff8e72"/><stop offset="1" stop-color="#db5464"/></linearGradient><linearGradient id="rainbow-wood" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffe9be"/><stop offset=".55" stop-color="#d6a071"/><stop offset="1" stop-color="#a96f54"/></linearGradient><linearGradient id="rainbow-pearl" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f3efff"/><stop offset="1" stop-color="#c5b7df"/></linearGradient></defs>
+<g stroke-linejoin="round" stroke-linecap="round">
+ <path d="M15 96C16 55 36 26 64 26S112 55 113 96" stroke="#a05a9c" stroke-width="14" fill="none"/>
+ <path d="M24 96C26 61 41 37 64 37S102 61 104 96" stroke="#ff8973" stroke-width="12" fill="none"/>
+ <path d="M34 96C34 66 48 47 64 47S94 66 94 96" stroke="#ffca61" stroke-width="12" fill="none"/>
+ <path d="M45 96C45 74 53 57 64 57S83 74 83 96" stroke="#76cfb6" stroke-width="12" fill="none"/>
+ <path d="M56 96C56 78 59 70 64 70S72 78 72 96" stroke="#79b8f1" stroke-width="12" fill="none"/>
+ <path d="M15 96C18 55 38 26 64 26" stroke="white" stroke-width="3" fill="none" opacity=".46"/>
+ <circle cx="16" cy="97" r="8" fill="url(#rainbow-pearl)"/><circle cx="111" cy="97" r="8" fill="url(#rainbow-pearl)"/></g>
+</svg>

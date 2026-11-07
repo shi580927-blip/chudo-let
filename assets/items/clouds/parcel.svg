@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+<title>Посылка</title>
+<defs><linearGradient id="parcel-gold" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#fff7d7"/><stop offset=".55" stop-color="#ffc74d"/><stop offset="1" stop-color="#e88b35"/></linearGradient><linearGradient id="parcel-violet" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#f5e6ff"/><stop offset=".55" stop-color="#a676e7"/><stop offset="1" stop-color="#6a34b8"/></linearGradient><linearGradient id="parcel-sky" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#f1fdff"/><stop offset=".55" stop-color="#9edbff"/><stop offset="1" stop-color="#36a9cc"/></linearGradient><linearGradient id="parcel-coral" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffe9c7"/><stop offset=".55" stop-color="#ff8e72"/><stop offset="1" stop-color="#db5464"/></linearGradient><linearGradient id="parcel-wood" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffe9be"/><stop offset=".55" stop-color="#d6a071"/><stop offset="1" stop-color="#a96f54"/></linearGradient><linearGradient id="parcel-pearl" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f3efff"/><stop offset="1" stop-color="#c5b7df"/></linearGradient></defs>
+<g stroke-linejoin="round" stroke-linecap="round">
+ <path d="M18 41L64 20L110 40L64 63Z" fill="url(#parcel-wood)" stroke="#845b50" stroke-width="3.5"/>
+ <path d="M18 41L64 63V108L18 84Z" fill="#c68f66" stroke="#845b50" stroke-width="3.5"/>
+ <path d="M110 40L64 63V108L110 84Z" fill="url(#parcel-wood)" stroke="#845b50" stroke-width="3.5"/>
+ <path d="M45 29L88 51L88 62L45 41Z" fill="#f8eccd" stroke="#b89069" stroke-width="1.5" opacity=".95"/>
+ <path d="M42 53L42 96" stroke="#eed3a8" stroke-width="8" opacity=".84"/>
+ <path d="M86 52V93" stroke="#f8dfae" stroke-width="8" opacity=".86"/>
+ <rect x="79" y="65" width="20" height="22" rx="2.5" fill="#fff3d9" stroke="#a88670" stroke-width="1.8"/>
+ <path d="M83 73H95M83 78H92" stroke="#c89e91" stroke-width="2"/>
+ <path d="M26 45L55 61" stroke="#f6dcb3" stroke-width="2.3" opacity=".65"/></g>
+</svg>
