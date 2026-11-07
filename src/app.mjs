@@ -60,7 +60,7 @@ function board(t,print=false){
    return '<div class="logic-table-cell'+(missing?' missing':'')+'">'+(missing?'?':'<span>'+draw(r,t.theme)+'</span><span>'+draw(c,t.theme)+'</span>')+'</div>';
   }).join("")+'</div>').join("");
   const options='<div class="table-options">'+t.options.map((pair,i)=>'<button type="button" class="table-option'+(!print&&state.answer===i?' selected':'')+'"'+(print?' tabindex="-1"':' data-action="pickTable" data-value="'+i+'"')+'><span>'+draw(pair[0],t.theme)+'</span><b>+</b><span>'+draw(pair[1],t.theme)+'</span></button>').join("")+'</div>';
-  return '<div class="logic-table" style="--logic-n:'+n+'">'+top+rest+'</div><p class="game-label">Какая пара должна стоять вместо вопроса?</p>'+options;
+  return '<div class="logic-table" style="--logic-cols:'+(n+1)+'">'+top+rest+'</div><p class="game-label">Какая пара должна стоять вместо вопроса?</p>'+options;
  }
  if(t.kind==="sudoku"){
   const values=print?t.grid:Array.isArray(state.answer)?state.answer:t.grid;
