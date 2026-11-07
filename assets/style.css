@@ -35,3 +35,16 @@
 @media print{.print-task .art-image{filter:none}.print-task .emoji-tile .art-image{width:85%;height:85%}.print-task .target-badge .art-image{width:85%;height:85%}}
 
 .art-note{margin:2px 0 3px;font-size:11px;color:#7d6c9b;line-height:1.45}
+
+/* v0.2: точная игра «Найди отличия» — одинаковая сетка и отдельные выборы справа. */
+.diff-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.diff-panel{border:1px solid #e4d9f5;background:#fff;border-radius:17px;padding:12px;min-width:0}
+.diff-panel .game-label{font-size:12px;margin-bottom:9px;color:#68578f}
+.diff-grid{display:grid;grid-template-columns:repeat(var(--diff-cols),minmax(0,1fr));gap:5px}
+.diff-cell{border:1px solid #e5e1f0;background:#f9f7ff;border-radius:9px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;min-width:0;padding:2px;font-size:clamp(18px,2.2vw,29px)}
+.diff-cell .art-image{width:93%;height:93%;max-width:55px;max-height:55px}
+button.diff-cell{cursor:pointer;font:inherit;font-size:clamp(18px,2.2vw,29px)}
+button.diff-cell:hover,button.diff-cell:focus-visible{border-color:#7951cf;outline:2px solid #e2d6ff}
+.diff-cell.selected{border-color:#6a34b8;background:#e7dbff;box-shadow:inset 0 0 0 2px #8255d9}
+@media(max-width:760px){.diff-pair{grid-template-columns:1fr}.diff-panel{padding:10px}.diff-grid{max-width:390px;margin:auto;gap:6px}.diff-cell,button.diff-cell{font-size:clamp(24px,7vw,41px)}.diff-cell .art-image{max-width:70px;max-height:70px}}
+@media print{.print-task .diff-pair{grid-template-columns:1fr;gap:4mm}.print-task .diff-grid{max-width:96mm;gap:1mm;margin:auto}.print-task .diff-panel{border:1px solid #ccc;padding:2mm}.print-task .diff-cell{border:1px solid #ddd;font-size:19pt}.print-task .diff-cell .art-image{max-width:18mm;max-height:18mm}.print-task:has(.diff-pair){break-before:page;page-break-before:always}}

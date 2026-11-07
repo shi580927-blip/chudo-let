@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer} from "../src/engine.mjs";
-test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,10);});
+test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,11);});
 test("Генераторы всех тем и возрастов гарантированно корректны",()=>{
  for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(const kind of READY_IDS)for(let seed=0;seed<30;seed++){
   const t=makeTask(kind,age,theme,seed);
@@ -43,4 +43,25 @@ test("От 7 лет: два выхода со старта и ровно 2–3 �
 test("Некорректное количество маршрутов не проходит проверку",()=>{
  const maze=makeTask("maze","7-9","clouds",42);
  assert.equal(validateTask({...maze,routeCount:1}),false);
+});
+
+test("«Найди отличия»: точное количество замен, без ложных отличий и одинаковые основы",()=>{
+ for(const theme of Object.keys(THEMES))
+ for(const age of ["3-4","5-6","7-9","10-12"])
+ for(let seed=0;seed<150;seed++){
+  const t=makeTask("differences",age,theme,seed);
+  assert.ok(validateTask(t),theme+" "+age+" "+seed);
+  const actual=t.base.flatMap((x,i)=>t.changed[i]!==x?[i]:[]);
+  assert.deepEqual(actual,t.answer);
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,t.answer.slice(1)),false);
+  assert.equal(checkAnswer(t,[...t.answer,t.answer[0]]),false);
+  const tampered={...t,changed:[...t.changed]};
+  tampered.changed[t.answer[0]]=tampered.base[t.answer[0]];
+  assert.equal(validateTask(tampered),false);
+ }
+});
+test("Комплект для самых маленьких не включает механики старших возрастов",()=>{
+ const b=generateBundle({age:"3-4",count:20,focus:"mixed"});
+ assert.ok(b.tasks.every(t=>CATALOG.find(c=>c.id===t.kind).minAge<=3));
 });

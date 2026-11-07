@@ -16,7 +16,7 @@ export const CATALOG = [
  ["phrase","Закончи фразу","Речь",5],["cipher","Секретный шифр","Приключения",6],
  ["backpack","Волшебный рюкзак","Приключения",4],["detective","Маленький детектив","Приключения",6],
  ["branching","Приключение с выбором","Приключения",5],["team","Командная миссия","Приключения",6]
-].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","shadow","odd","sequence","sort","pair","maze","count","compare","story"].includes(id)}));
+].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","odd","sequence","sort","pair","maze","count","compare","story"].includes(id)}));
 
 export const THEMES = {
  clouds:{name:"Облачная почта",icon:"☁️",a:["✉️","📦","🪁","🧭","🔔","🗝️"],b:["🌈","⭐","☁️","🌙","☀️","⚡"],labels:["Почтовые находки","Небесные чудеса"]},
@@ -110,6 +110,15 @@ function maze(size,r,branching=false){
 function taskFor(kind,age,theme,r){
  const t=THEMES[theme]||THEMES.clouds,combined=[...t.a,...t.b],short=age<=3;
  let q={kind,title:CATALOG.find(e=>e.id===kind)?.name??kind,theme,age};
+ if(kind==="differences"){
+  const cols=short?3:age<=5?4:5,rows=short?3:age<=7?4:5;
+  const base=Array.from({length:cols*rows},()=>pick(combined,r));
+  const howMany=short?3:age<=5?4:age<=7?5:6;
+  const answer=shuffle(Array.from({length:base.length},(_,i)=>i),r).slice(0,howMany).sort((a,b)=>a-b);
+  const changed=base.slice();
+  for(const pos of answer)changed[pos]=pick(combined.filter(icon=>icon!==base[pos]),r);
+  return {...q,prompt:"Найди "+howMany+" отличия. Отмечай изменённые предметы на второй картинке.",cols,rows,base,changed,answer};
+ }
  if(kind==="find"||kind==="count"){
   const target=pick(combined,r),n=short?12:20,quantity=2+integer(r,short?3:5);
   const cells=shuffle([...Array(quantity).fill(target),...Array.from({length:n-quantity},()=>pick(combined.filter(e=>e!==target),r))],r);
@@ -156,6 +165,13 @@ export function makeTask(kind,age="5-6",theme="clouds",seed=1){
 }
 export function validateTask(t){
  if(!t||!READY_IDS.includes(t.kind))return false;
+ if(t.kind==="differences"){
+  if(!Array.isArray(t.base)||!Array.isArray(t.changed)||!Array.isArray(t.answer)||!Number.isInteger(t.cols)||!Number.isInteger(t.rows))return false;
+  const expected=t.cols*t.rows;
+  if(t.base.length!==expected||t.changed.length!==expected||t.answer.length<2)return false;
+  const positions=t.base.flatMap((symbol,i)=>t.changed[i]!==symbol?[i]:[]);
+  return positions.length===t.answer.length&&positions.every((i,j)=>i===t.answer[j]);
+ }
  if(t.kind==="find"||t.kind==="count")return t.cells.filter(c=>c===t.target).length===t.answer&&t.options.includes(t.answer);
  if(t.kind==="odd")return Number.isInteger(t.answer)&&t.answer>=0&&t.answer<t.cells.length;
  if(t.kind==="shadow"||t.kind==="pair"||t.kind==="sequence")return t.options.includes(t.answer)&&new Set(t.options).size===t.options.length;
@@ -171,12 +187,14 @@ export function validateTask(t){
  return false;
 }
 export function checkAnswer(t,value){
+ if(t.kind==="differences")return Array.isArray(value)&&value.length===t.answer.length&&new Set(value).size===value.length&&value.every(v=>t.answer.includes(v));
  if(t.kind==="sort")return Array.isArray(value)&&value.length===t.items.length&&value.every((x,i)=>x===t.items[i].group);
  if(t.kind==="maze")return Array.isArray(value)&&value[0]===0&&value.at(-1)===t.size*t.size-1&&value.every((cell,i)=>i===0||neighbors(t,value[i-1]).includes(cell));
  if(t.kind==="story")return Array.isArray(value)&&value.join(",")==="0,1,2,3";
  return String(value)===String(t.answer);
 }
 export function solutionText(t){
+ if(t.kind==="differences")return t.answer.map(i=>"строка "+(Math.floor(i/t.cols)+1)+", столбец "+(i%t.cols+1)).join("; ");
  if(t.kind==="maze")return "Возможных маршрутов: "+t.routeCount+". Пример: "+solveMaze(t).map(n=>"("+((n%t.size)+1)+","+Math.floor(n/t.size+1)+")").join(" → ");
  if(t.kind==="sort")return t.items.map(i=>i.icon+" — "+t.labels[i.group]).join("; ");
  if(t.kind==="story")return STORY_STEPS.map(e=>e.text).join(" → ");
@@ -186,7 +204,8 @@ export function solutionText(t){
 }
 export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,focus="mixed"}={}){
  count=Math.max(1,Math.min(20,Number(count)||7));
- const pool=focus==="logic"?["shadow","odd","sequence","sort","pair","maze","compare"]:focus==="story"?["find","sort","sequence","maze","count","pair","story"]:READY_IDS;
+ const eligible=(ids)=>ids.filter(id=>CATALOG.find(c=>c.id===id).minAge<=resolveAge(age));
+ const pool=eligible(focus==="logic"?["shadow","differences","odd","sequence","sort","pair","maze","compare"]:focus==="story"?["find","sort","sequence","maze","count","pair","story"]:READY_IDS);
  const r=seeded(seed),tasks=Array.from({length:count},(_,i)=>makeTask(pool[i%pool.length],age,theme,integer(r,2**30)+i));
  if(!tasks.every(validateTask))throw new Error("Автопроверка заданий не пройдена");
  return {schema:"chudolet.bundle.v1",title:"Приключение: "+(THEMES[theme]?.name||THEMES.clouds.name),age,theme,count,seed,focus,created:"",tasks};

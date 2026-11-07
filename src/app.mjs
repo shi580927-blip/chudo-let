@@ -45,6 +45,21 @@ function mazeSvg(t,print=false){
 }
 function board(t,print=false){
  const pick=(opts)=>pickButtons(opts,print,t.theme);
+ if(t.kind==="differences"){
+  const selected=Array.isArray(state.answer)?state.answer:[];
+  const panel=(cells,second)=>{
+   const blocks=cells.map((icon,i)=>{
+    const picked=second&&selected.includes(i),className="diff-cell"+(picked?" selected":"");
+    const attrs=second&&!print?' data-action="difference" data-cell="'+i+'" aria-label="Позиция '+(i+1)+'"':'';
+    const tag=second&&!print?"button":"div";
+    return '<'+tag+(tag==="button"?' type="button"':'')+' class="'+className+'"'+attrs+'>'+draw(icon,t.theme)+'</'+tag+'>';
+   }).join("");
+   return '<div class="diff-panel"><div class="game-label">'+(second?"Картинка Б — ищи здесь":"Картинка А — образец")+'</div><div class="diff-grid" style="--diff-cols:'+t.cols+'">'+blocks+'</div></div>';
+  };
+  return '<div class="diff-pair">'+panel(t.base,false)+panel(t.changed,true)+'</div>'+
+   (print?'<p class="game-label">Отметь отличающиеся предметы на картинке Б.</p>':
+    '<p class="game-label">Отмечено '+selected.length+' из '+t.answer.length+'. Нажми повторно, чтобы отменить выбор.</p>');
+ }
  if(t.kind==="find"||t.kind==="count")return '<div class="game-label">Ищи значок '+targetBadge(t.target)+' среди других</div>'+emojiGrid(t.cells, t.cells.length<=12,t.theme)+pick(t.options);
  if(t.kind==="shadow")return '<p class="game-label">Узнай предмет по силуэту</p><div class="question-mark" role="img" aria-label="Чёрный силуэт предмета"><span aria-hidden="true">'+draw(t.target,t.theme)+'</span></div>'+pick(t.options);
  if(t.kind==="odd")return '<div class="choice-row">'+t.cells.map((c,i)=>'<button type="button" class="pick '+(!print&&state.answer===i?'selected':'')+'"'+(print?'':' data-action="pick" data-value="'+i+'"')+'>'+draw(c,t.theme)+'</button>').join("")+'</div>';
@@ -67,7 +82,7 @@ function board(t,print=false){
  return "<p>Механика пока не поддерживается.</p>";
 }
 function hintFor(t){
- switch(t.kind){case"find":case"count":return"Посмотри на каждую строчку слева направо и отмечай найденные значки.";case"odd":return"Пять картинок можно объединить в одну группу, а одну — нет.";case"shadow":return"Сравни общий контур, а не цвет.";case"sequence":return"Посмотри, через сколько шагов повторяется рисунок.";case"sort":return"Названия корзин помогут понять общее свойство.";case"pair":return"Подумай, что обычно используется вместе.";case"maze":return"Из каждой клетки можно перейти только туда, где нет стенки.";case"compare":return"Сосчитай предметы с каждой стороны.";case"story":return"Что произошло сначала, а что могло случиться только потом?";default:return"Посмотри внимательно на условие.";}
+ switch(t.kind){case"differences":return"Сравни предметы в одинаковых клетках обеих картинок — начни с верхнего ряда.";case"find":case"count":return"Посмотри на каждую строчку слева направо и отмечай найденные значки.";case"odd":return"Пять картинок можно объединить в одну группу, а одну — нет.";case"shadow":return"Сравни общий контур, а не цвет.";case"sequence":return"Посмотри, через сколько шагов повторяется рисунок.";case"sort":return"Названия корзин помогут понять общее свойство.";case"pair":return"Подумай, что обычно используется вместе.";case"maze":return"Из каждой клетки можно перейти только туда, где нет стенки.";case"compare":return"Сосчитай предметы с каждой стороны.";case"story":return"Что произошло сначала, а что могло случиться только потом?";default:return"Посмотри внимательно на условие.";}
 }
 function renderNav(){
  $("taskNav").innerHTML=state.bundle.tasks.map((t,i)=>'<button class="task-pill'+(i===state.index?' active':'')+(state.done.has(i)?' done':'')+'" data-task="'+i+'" title="'+escapeHtml(t.title)+'" aria-label="Задание '+(i+1)+'">'+(i+1)+'</button>').join("");
@@ -95,6 +110,11 @@ function tryMove(cell){
 $("activity").addEventListener("click",event=>{
  const target=event.target.closest("[data-action]");if(!target)return;
  const action=target.dataset.action,t=task();
+ if(action==="difference"){
+  const n=Number(target.dataset.cell),prev=Array.isArray(state.answer)?state.answer:[];
+  state.answer=prev.includes(n)?prev.filter(x=>x!==n):[...prev,n];
+  state.checked=false;
+ }
  if(action==="pick"){state.answer=t.kind==="odd"?Number(target.dataset.value):target.dataset.value;state.checked=false;}
  if(action==="sort"){state.answer=[...(state.answer||[]),Number(target.dataset.value)];state.checked=false;}
  if(action==="story"){const next=Number(target.dataset.order);if(!(state.answer||[]).includes(next)){state.answer=[...(state.answer||[]),next];state.checked=false;}}
