@@ -3,15 +3,18 @@ const $=id=>document.getElementById(id);
 const state={bundle:generateBundle(),index:0,answer:null,checked:false,hint:false,done:new Set(),view:"builder"};
 const escapeHtml=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 /** Поднимаем искомый предмет до размера отдельной иллюстрации, включая телефон и печать. */
-function targetBadge(target){
- return '<span class="target-badge" role="img" aria-label="Искомый предмет">'+escapeHtml(target)+'</span>';
+function targetBadge(target,label="Искомый предмет"){
+ return '<span class="target-badge" role="img" aria-label="'+escapeHtml(label)+'">'+escapeHtml(target)+'</span>';
 }
 function promptHTML(t){
- const plain=escapeHtml(t.prompt);
+ let text=escapeHtml(t.prompt);
  if(["find","count","pair"].includes(t.kind)&&t.target){
-  return plain.replace(escapeHtml(t.target),targetBadge(t.target));
+  return text.replace(escapeHtml(t.target),targetBadge(t.target));
  }
- return plain;
+ if(t.kind==="maze"){
+  return text.replace("🐾",targetBadge("🐾","Старт")).replace("⭐",targetBadge("⭐","Финиш"));
+ }
+ return text;
 }
 function task(){return state.bundle.tasks[state.index];}
 function reset(){state.answer=null;state.checked=false;state.hint=false;}
