@@ -2,6 +2,17 @@ import {CATALOG,THEMES,generateBundle,checkAnswer,solutionText,neighbors,solveMa
 const $=id=>document.getElementById(id);
 const state={bundle:generateBundle(),index:0,answer:null,checked:false,hint:false,done:new Set(),view:"builder"};
 const escapeHtml=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+/** Поднимаем искомый предмет до размера отдельной иллюстрации, включая телефон и печать. */
+function targetBadge(target){
+ return '<span class="target-badge" role="img" aria-label="Искомый предмет">'+escapeHtml(target)+'</span>';
+}
+function promptHTML(t){
+ const plain=escapeHtml(t.prompt);
+ if(["find","count","pair"].includes(t.kind)&&t.target){
+  return plain.replace(escapeHtml(t.target),targetBadge(t.target));
+ }
+ return plain;
+}
 function task(){return state.bundle.tasks[state.index];}
 function reset(){state.answer=null;state.checked=false;state.hint=false;}
 function emojiGrid(arr,compact=false){
@@ -29,7 +40,7 @@ function mazeSvg(t,print=false){
 }
 function board(t,print=false){
  const pick=(opts)=>pickButtons(opts,print);
- if(t.kind==="find"||t.kind==="count")return '<div class="game-label">Ищи значок '+t.target+' среди других</div>'+emojiGrid(t.cells, t.cells.length<=12)+pick(t.options);
+ if(t.kind==="find"||t.kind==="count")return '<div class="game-label">Ищи значок '+targetBadge(t.target)+' среди других</div>'+emojiGrid(t.cells, t.cells.length<=12)+pick(t.options);
  if(t.kind==="shadow")return '<p class="game-label">Узнай предмет по силуэту</p><div class="question-mark" role="img" aria-label="Чёрный силуэт предмета"><span aria-hidden="true">'+t.target+'</span></div>'+pick(t.options);
  if(t.kind==="odd")return '<div class="choice-row">'+t.cells.map((c,i)=>'<button type="button" class="pick '+(!print&&state.answer===i?'selected':'')+'"'+(print?'':' data-action="pick" data-value="'+i+'"')+'>'+c+'</button>').join("")+'</div>';
  if(t.kind==="sequence")return '<div class="series">'+t.shown.map(x=>'<span>'+x+'</span>').join("")+'<span>?</span></div>'+pick(t.options);
@@ -59,7 +70,7 @@ function renderNav(){
 function renderTask(){
  const t=task(),ready=state.answer!==null;
  let feedback=state.checked?'<div class="feedback '+(checkAnswer(t,state.answer)?'good':'')+'" role="status">'+(checkAnswer(t,state.answer)?"✓ Верно! Отличная работа.":"Не совсем. Можно попробовать ещё раз!")+'</div>':'';
- $("activity").innerHTML='<div class="activity-intro"><div><span class="group">'+escapeHtml(CATALOG.find(c=>c.id===t.kind).group)+' · Задание '+(state.index+1)+'</span><h3>'+escapeHtml(t.title)+'</h3></div><span class="status ready">● Можно играть</span></div><p class="prompt">'+escapeHtml(t.prompt)+'</p><div class="game-board">'+board(t)+'</div><div class="game-actions"><button class="primary" data-action="check" '+(!ready?'disabled':'')+'>✓ Проверить</button><button class="ghost" data-action="reset">↻ Сначала</button><button class="ghost" data-action="hint">? Подсказка</button></div>'+(state.hint?'<div class="answer-hint">'+escapeHtml(hintFor(t))+'</div>':'')+feedback;
+ $("activity").innerHTML='<div class="activity-intro"><div><span class="group">'+escapeHtml(CATALOG.find(c=>c.id===t.kind).group)+' · Задание '+(state.index+1)+'</span><h3>'+escapeHtml(t.title)+'</h3></div><span class="status ready">● Можно играть</span></div><p class="prompt">'+promptHTML(t)+'</p><div class="game-board">'+board(t)+'</div><div class="game-actions"><button class="primary" data-action="check" '+(!ready?'disabled':'')+'>✓ Проверить</button><button class="ghost" data-action="reset">↻ Сначала</button><button class="ghost" data-action="hint">? Подсказка</button></div>'+(state.hint?'<div class="answer-hint">'+escapeHtml(hintFor(t))+'</div>':'')+feedback;
  $("taskCounter").textContent="Задание "+(state.index+1)+" из "+state.bundle.tasks.length;
  $("prevBtn").disabled=state.index===0;$("nextBtn").disabled=state.index===state.bundle.tasks.length-1;
  renderNav();
@@ -113,7 +124,7 @@ document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",(
  ["builder","catalog","about"].forEach(v=>$(v+"View").classList.toggle("hidden",v!==state.view));
 }));
 function printTask(t,i){
- return '<section class="print-task"><h2>'+(i+1)+'. '+escapeHtml(t.title)+'</h2><p>'+escapeHtml(t.prompt)+'</p><div class="game-board print-board">'+board(t,true)+'</div><div class="print-note">Место для ответа: ______________________________</div></section>';
+ return '<section class="print-task"><h2>'+(i+1)+'. '+escapeHtml(t.title)+'</h2><p>'+promptHTML(t)+'</p><div class="game-board print-board">'+board(t,true)+'</div><div class="print-note">Место для ответа: ______________________________</div></section>';
 }
 function makePrint(){
  const b=state.bundle;
