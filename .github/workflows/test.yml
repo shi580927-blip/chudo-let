@@ -1,0 +1,18 @@
+name: Test activity library
+on:
+  push:
+    branches: [main, feature/activity-library-mvp]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate all activity generators
+        run: npm test
