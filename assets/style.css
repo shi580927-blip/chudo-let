@@ -135,3 +135,66 @@ button.diff-cell:hover,button.diff-cell:focus-visible{border-color:#7951cf;outli
  .print-task .number-hundred{background:#eee}.print-task .number-one{background:#bbb;border-color:#888}
  .print-task .number-group{padding:2mm}
 }
+
+/* Речевые задания: буквы, слоги, настоящая сетка кроссворда. */
+.word-clue{width:118px;height:118px;margin:8px auto 16px;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,#fff8dc,#f4e9ff);border:2px solid #decdf5;border-radius:25px;font-size:79px;line-height:1}
+.word-slots{display:flex;justify-content:center;flex-wrap:wrap;gap:5px;max-width:720px;margin:12px auto 22px}
+.word-slot{min-width:39px;min-height:52px;border-bottom:3px solid #7451ce;display:flex;justify-content:center;align-items:center;background:#fff9ed;border-radius:7px 7px 3px 3px;font-size:clamp(22px,2.8vw,31px);font-weight:850;color:#533b80}
+.word-slot.syllable-slot{min-width:75px;padding:0 7px}
+.word-tiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:720px;margin:7px auto 12px}
+.word-tile{min-width:49px;min-height:54px;padding:6px 12px;display:flex;align-items:center;justify-content:center;border-radius:13px;border:2px solid #ccbae4;background:#fff;color:#5f3a95;font-size:28px;font-weight:850;cursor:pointer}
+.word-tile:hover,.word-tile:focus-visible{border-color:#7451ce;background:#f3edff}
+.word-tile.used{opacity:.3;cursor:not-allowed}
+.word-controls{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:10px auto 0}
+.crossword-worksheet{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(145px,0.8fr);gap:16px;align-items:start;margin:8px auto 20px;max-width:870px}
+.crossword-grid{display:grid;grid-template-columns:repeat(var(--cw-cols),minmax(0,1fr));gap:1px;background:#d4cae8;border:2px solid #b6a4d6;border-radius:9px;padding:4px;min-width:0;width:100%}
+.crossword-cell{position:relative;aspect-ratio:1;min-width:0;min-height:0;padding:0;border:1px solid #9c8abd;background:#fff;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,2vw,30px);font-weight:900;color:#4e367b;line-height:1;cursor:pointer}
+.crossword-cell.inactive{background:#f4f2fa;border-color:#e3deed;cursor:default}
+.crossword-cell.active{background:#edf7ce;box-shadow:inset 0 0 0 2px #95ba60}
+.crossword-number{position:absolute;top:1px;left:2px;font-size:clamp(7px,.7vw,10px);font-weight:800;color:#7d6b91;line-height:1}
+.crossword-letter{line-height:1}
+.crossword-clues{min-width:0;display:grid;gap:8px}
+.crossword-clues .game-label{margin:0;font-size:12px}
+.crossword-clue{display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:#fffaf0;border:1px solid #e8dcee;border-radius:13px;padding:8px 9px}
+.crossword-clue-num{font-size:14px;font-weight:900;color:#7552ad}
+.crossword-clue-icon{display:flex;font-size:40px;line-height:1}
+.crossword-dir{font-size:11px;color:#6b6280}.crossword-clue small{font-size:10px;color:#7d768c}
+.crossword-keyboard{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));max-width:710px;gap:5px;margin:12px auto}
+.crossword-key{min-height:40px;min-width:0;display:flex;align-items:center;justify-content:center;padding:3px 0;border:2px solid #d5c4e8;border-radius:9px;background:#fff;color:#553887;font-size:19px;font-weight:800;cursor:pointer}
+.crossword-key:hover{background:#f3edff;border-color:#7451ce}
+.crossword-keyboard .ghost{grid-column:span 3;font-size:13px}
+@media(max-width:780px){
+ .crossword-worksheet{grid-template-columns:1fr;gap:10px}
+ .crossword-grid{width:min(100%,530px);margin:auto}
+ .crossword-clues{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .crossword-clues>.game-label{grid-column:1/-1}
+ .crossword-cell{font-size:clamp(17px,4.1vw,30px)}
+ .crossword-number{font-size:9px}
+ .crossword-keyboard{grid-template-columns:repeat(8,minmax(0,1fr))}
+ .word-clue{width:105px;height:105px;font-size:70px}
+ .word-slot{min-width:33px;min-height:45px;font-size:24px}
+ .word-tile{min-width:42px;min-height:48px;font-size:25px}
+}
+@media(max-width:400px){
+ .crossword-clues{grid-template-columns:1fr}
+ .crossword-grid{padding:2px;gap:0}
+ .crossword-cell{font-size:clamp(15px,5.1vw,23px)}
+ .crossword-key{min-height:39px;font-size:17px}
+ .word-slots{gap:3px}.word-slot{min-width:28px;padding:0 2px}
+}
+@media print{
+ .print-task .word-clue{width:27mm;height:27mm;font-size:50pt;background:#fff;border:1px solid #999}
+ .print-task .word-slot{min-width:10mm;min-height:11mm;font-size:19pt;background:#fff}
+ .print-task .word-slot.syllable-slot{min-width:18mm}
+ .print-task .word-tile{min-width:12mm;min-height:12mm;font-size:20pt;border:1px solid #aaa;color:#333}
+ .print-task .crossword-worksheet{grid-template-columns:1fr;gap:4mm}
+ .print-task .crossword-grid{max-width:140mm;width:100%;background:#eee;border:1px solid #777}
+ .print-task .crossword-cell{border:1px solid #aaa;background:#fff;font-size:20pt}
+ .print-task .crossword-cell.inactive{background:#eee}
+ .print-task .crossword-number{font-size:9pt}
+ .print-task .crossword-clues{grid-template-columns:repeat(3,1fr);gap:3mm}
+ .print-task .crossword-clues .game-label{grid-column:1/-1}
+ .print-task .crossword-clue{padding:2mm;border:1px solid #bbb;background:#fff}
+ .print-task .crossword-clue-icon{font-size:25pt}
+ .print-task:has(.crossword-grid){break-before:page;page-break-before:always}
+}
