@@ -45,6 +45,43 @@ function mazeSvg(t,print=false){
 }
 function board(t,print=false){
  const pick=(opts)=>pickButtons(opts,print,t.theme);
+ if(t.kind==="word"||t.kind==="syllables"){
+  const selected=!print&&Array.isArray(state.answer)?state.answer:[];
+  const used=new Set(selected);
+  const clue='<div class="word-clue" role="img" aria-label="Предмет для отгадывания">'+draw(t.icon,t.theme)+'</div>';
+  const slots=Array.from({length:t.tiles.length},(_,i)=>'<span class="word-slot'+(t.kind==="syllables"?' syllable-slot':'')+'">'+(print?"＿":selected[i]===undefined?"·":escapeHtml(t.tiles[selected[i]]))+'</span>').join("");
+  const tiles=t.tiles.map((token,i)=>{
+   const attrs=print?'':' type="button" data-action="tilePick" data-value="'+i+'"'+(used.has(i)?' disabled':'');
+   const tag=print?"span":"button";
+   return '<'+tag+' class="word-tile'+(used.has(i)&&!print?' used':'')+'"'+attrs+'>'+escapeHtml(token)+'</'+tag+'>';
+  }).join("");
+  return clue+'<div class="word-slots">'+slots+'</div><p class="game-label">Буквы и слоги перемешаны. Выбирай по порядку:</p>'+
+   '<div class="word-tiles">'+tiles+'</div>'+(print?'':'<div class="word-controls"><button type="button" class="ghost" data-action="tileBack">⌫ Убрать последний</button><button type="button" class="ghost" data-action="tileClear">Очистить</button></div>');
+ }
+ if(t.kind==="crossword"){
+  const selected=!print&&Array.isArray(state.answer)?state.answer:t.grid;
+  const heads=new Map();
+  for(const item of t.entries){
+   const pos=item.row*t.cols+item.col;
+   heads.set(pos,[...(heads.get(pos)||[]),item.number]);
+  }
+  const cells=t.grid.map((slot,i)=>{
+   if(slot===null)return '<div class="crossword-cell inactive" aria-hidden="true"></div>';
+   const tag=print?"div":"button";
+   const value=print?"":selected[i]||"";
+   return '<'+tag+' class="crossword-cell'+(!print&&state.activeCell===i?' active':'')+'"'+(print?'':' type="button" data-action="crosswordCell" data-cell="'+i+'" aria-label="Клетка '+(Math.floor(i/t.cols)+1)+'-'+(i%t.cols+1)+'"')+'>'+
+    (heads.has(i)?'<span class="crossword-number">'+heads.get(i).join("/")+'</span>':'')+
+    '<span class="crossword-letter">'+escapeHtml(value)+'</span></'+tag+'>';
+  }).join("");
+  const clues=t.entries.map(entry=>'<div class="crossword-clue"><span class="crossword-clue-num">'+entry.number+'.</span>'+
+   '<span class="crossword-clue-icon">'+draw(entry.icon,t.theme)+'</span>'+
+   '<span class="crossword-dir">'+(entry.orientation==="down"?"↓ Сверху вниз":"→ Слева направо")+'</span><small>'+entry.word.length+' букв</small></div>').join("");
+  const keyboard=print?'':'<div class="crossword-keyboard">'+[..."АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"].map(letter=>'<button type="button" class="crossword-key" data-action="crosswordLetter" data-value="'+letter+'"'+(state.activeCell===null?' disabled':'')+'>'+letter+'</button>').join("")+
+   '<button class="ghost" type="button" data-action="crosswordErase"'+(state.activeCell===null?' disabled':'')+'>⌫ Стереть</button></div>';
+  return '<div class="crossword-worksheet"><div class="crossword-grid" style="--cw-cols:'+t.cols+'">'+cells+'</div>'+
+   '<div class="crossword-clues"><p class="game-label">Подсказки-картинки</p>'+clues+'</div></div>'+keyboard+
+   (print?'':'<p class="game-label">Выбери пустую клетку, затем нажми букву.</p>');
+ }
  if(t.kind==="map"){
   const grid=t.icons.map((icon,i)=>'<div class="map-cell'+(i===t.start?' map-start':'')+'" aria-label="'+(i===t.start?'Начало маршрута':icon?'Место с предметом':'Пустой участок')+'">'+
    (i===t.start?'<span class="map-flag">🚩</span>':icon!==null?draw(icon,t.theme):'<span class="map-empty">·</span>')+'</div>').join("");
@@ -141,7 +178,7 @@ function board(t,print=false){
  return "<p>Механика пока не поддерживается.</p>";
 }
 function hintFor(t){
- switch(t.kind){case"map":return"Найди флажок. Следуй стрелкам по порядку, каждую стрелку считай одним шагом.";case"cipher":return"Для каждого значка найди букву в ключе. Записывай буквы по очереди.";case"number":return"Большой квадрат — сто, полоска из десяти точек — десять, маленький круг — один.";case"memory":return"Запомни все значки и их места, затем нажми кнопку и найди исчезнувший.";case"table":return"Сравни нужную строку и столбец: на пересечении должны быть оба значка.";case"sudoku":return"В каждой строке, столбце и квадрате 2×2 значки не повторяются.";case"differences":return"Сравни предметы в одинаковых клетках обеих картинок — начни с верхнего ряда.";case"find":case"count":return"Посмотри на каждую строчку слева направо и отмечай найденные значки.";case"odd":return"Пять картинок можно объединить в одну группу, а одну — нет.";case"shadow":return"Сравни общий контур, а не цвет.";case"sequence":return"Посмотри, через сколько шагов повторяется рисунок.";case"sort":return"Названия корзин помогут понять общее свойство.";case"pair":return"Подумай, что обычно используется вместе.";case"maze":return"Из каждой клетки можно перейти только туда, где нет стенки.";case"compare":return"Сосчитай предметы с каждой стороны.";case"story":return"Что произошло сначала, а что могло случиться только потом?";default:return"Посмотри внимательно на условие.";}
+ switch(t.kind){case"word":return"Посмотри на картинку, назови предмет и выбирай буквы по одной.";case"syllables":return"Произнеси название предмета по слогам. Сначала выбери первый слог.";case"crossword":return"Начни со слова, которое легко узнать по картинке. В месте пересечения буква одна и та же.";case"map":return"Найди флажок. Следуй стрелкам по порядку, каждую стрелку считай одним шагом.";case"cipher":return"Для каждого значка найди букву в ключе. Записывай буквы по очереди.";case"number":return"Большой квадрат — сто, полоска из десяти точек — десять, маленький круг — один.";case"memory":return"Запомни все значки и их места, затем нажми кнопку и найди исчезнувший.";case"table":return"Сравни нужную строку и столбец: на пересечении должны быть оба значка.";case"sudoku":return"В каждой строке, столбце и квадрате 2×2 значки не повторяются.";case"differences":return"Сравни предметы в одинаковых клетках обеих картинок — начни с верхнего ряда.";case"find":case"count":return"Посмотри на каждую строчку слева направо и отмечай найденные значки.";case"odd":return"Пять картинок можно объединить в одну группу, а одну — нет.";case"shadow":return"Сравни общий контур, а не цвет.";case"sequence":return"Посмотри, через сколько шагов повторяется рисунок.";case"sort":return"Названия корзин помогут понять общее свойство.";case"pair":return"Подумай, что обычно используется вместе.";case"maze":return"Из каждой клетки можно перейти только туда, где нет стенки.";case"compare":return"Сосчитай предметы с каждой стороны.";case"story":return"Что произошло сначала, а что могло случиться только потом?";default:return"Посмотри внимательно на условие.";}
 }
 function renderNav(){
  $("taskNav").innerHTML=state.bundle.tasks.map((t,i)=>'<button class="task-pill'+(i===state.index?' active':'')+(state.done.has(i)?' done':'')+'" data-task="'+i+'" title="'+escapeHtml(t.title)+'" aria-label="Задание '+(i+1)+'">'+(i+1)+'</button>').join("");
@@ -149,7 +186,7 @@ function renderNav(){
 function renderTask(){
  const t=task(),ready=state.answer!==null;
  let feedback=state.checked==="incomplete"
-  ?'<div class="feedback" role="status">'+(t.kind==="sudoku"?"Закончите задание полностью для проверки — заполните все пустые клетки.":"Сначала заполни все буквы или цифры, затем проверим ответ.")+'</div>'
+  ?'<div class="feedback" role="status">'+(t.kind==="sudoku"?"Закончите задание полностью для проверки — заполните все пустые клетки.":t.kind==="crossword"?"Заполни все белые клетки кроссворда, затем проверь ответ.":"Сначала заполни все буквы или цифры, затем проверим ответ.")+'</div>'
   :state.checked?'<div class="feedback '+(checkAnswer(t,state.answer)?'good':'')+'" role="status">'+(checkAnswer(t,state.answer)?"✓ Верно! Отличная работа.":"Не совсем. Можно попробовать ещё раз!")+'</div>':'';
  $("activity").innerHTML='<div class="activity-intro"><div><span class="group">'+escapeHtml(CATALOG.find(c=>c.id===t.kind).group)+' · Задание '+(state.index+1)+'</span><h3>'+escapeHtml(t.title)+'</h3></div><span class="status ready">● Можно играть</span></div><p class="prompt">'+promptHTML(t)+'</p><div class="game-board">'+board(t)+'</div><div class="game-actions"><button class="primary" data-action="check" '+(!ready?'disabled':'')+'>✓ Проверить</button><button class="ghost" data-action="reset">↻ Сначала</button><button class="ghost" data-action="hint">? Подсказка</button></div>'+(state.hint?'<div class="answer-hint">'+escapeHtml(hintFor(t))+'</div>':'')+feedback;
  $("taskCounter").textContent="Задание "+(state.index+1)+" из "+state.bundle.tasks.length;
@@ -171,6 +208,26 @@ function tryMove(cell){
 $("activity").addEventListener("click",event=>{
  const target=event.target.closest("[data-action]");if(!target)return;
  const action=target.dataset.action,t=task();
+ if(action==="tilePick"&&(t.kind==="word"||t.kind==="syllables")){
+  const idx=Number(target.dataset.value),prev=Array.isArray(state.answer)?state.answer:[];
+  if(Number.isInteger(idx)&&idx>=0&&idx<t.tiles.length&&!prev.includes(idx)&&prev.length<t.tiles.length){
+   state.answer=[...prev,idx];state.checked=false;
+  }
+ }
+ if((action==="tileBack"||action==="tileClear")&&(t.kind==="word"||t.kind==="syllables")){
+  const prev=Array.isArray(state.answer)?state.answer:[];
+  state.answer=action==="tileBack"?prev.slice(0,-1):[];
+  state.checked=false;
+ }
+ if(action==="crosswordCell"&&t.kind==="crossword"){
+  const idx=Number(target.dataset.cell);
+  if(Number.isInteger(idx)&&idx>=0&&idx<t.grid.length&&t.grid[idx]!==null)state.activeCell=idx;
+ }
+ if((action==="crosswordLetter"||action==="crosswordErase")&&t.kind==="crossword"&&state.activeCell!==null){
+  const chars=Array.isArray(state.answer)?state.answer.slice():t.grid.slice();
+  chars[state.activeCell]=action==="crosswordErase"?"":String(target.dataset.value);
+  state.answer=chars;state.checked=false;
+ }
  if(action==="cipherLetter"&&t.kind==="cipher"){
   const current=typeof state.answer==="string"?state.answer:"";
   if(current.length<t.answer.length)state.answer=current+String(target.dataset.value);
@@ -214,6 +271,10 @@ $("activity").addEventListener("click",event=>{
   if(t.kind==="sudoku"&&(!Array.isArray(state.answer)||state.answer.some(v=>v===null))){
    state.checked="incomplete";
   }else if((t.kind==="cipher"||t.kind==="number")&&String(state.answer).length<t.answer.length){
+   state.checked="incomplete";
+  }else if((t.kind==="word"||t.kind==="syllables")&&(!Array.isArray(state.answer)||state.answer.length!==t.tiles.length)){
+   state.checked="incomplete";
+  }else if(t.kind==="crossword"&&(!Array.isArray(state.answer)||t.grid.some((slot,i)=>slot!==null&&!state.answer[i]))){
    state.checked="incomplete";
   }else{
    state.checked=true;
