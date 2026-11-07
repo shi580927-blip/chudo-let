@@ -1,7 +1,7 @@
 name: Test activity library
 on:
   push:
-    branches: [main, feature/activity-library-mvp]
+    branches: [main, feature/activity-library-mvp, alpha/v0.1.0, develop/activity-library-v0.2]
   pull_request:
     branches: [main]
 permissions:
