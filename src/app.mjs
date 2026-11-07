@@ -63,7 +63,7 @@ function board(t,print=false){
   return '<div class="logic-table" style="--logic-n:'+n+'">'+top+rest+'</div><p class="game-label">Какая пара должна стоять вместо вопроса?</p>'+options;
  }
  if(t.kind==="sudoku"){
-  const values=Array.isArray(state.answer)?state.answer:t.grid;
+  const values=print?t.grid:Array.isArray(state.answer)?state.answer:t.grid;
   const selected=state.activeCell;
   const cells=t.grid.map((given,i)=>{
    const editable=given===null,tag=editable&&!print?"button":"div";
@@ -74,7 +74,7 @@ function board(t,print=false){
   return '<div class="sudoku-grid">'+cells+'</div>'+palette;
  }
  if(t.kind==="differences"){
-  const selected=Array.isArray(state.answer)?state.answer:[];
+  const selected=print?[]:Array.isArray(state.answer)?state.answer:[];
   const panel=(cells,second)=>{
    const blocks=cells.map((icon,i)=>{
     const picked=second&&selected.includes(i),className="diff-cell"+(picked?" selected":"");
