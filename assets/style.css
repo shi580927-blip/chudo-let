@@ -63,7 +63,7 @@ button.diff-cell:hover,button.diff-cell:focus-visible{border-color:#7951cf;outli
 .logic-table-row{display:grid;grid-template-columns:repeat(var(--logic-cols),minmax(0,1fr))}
 .logic-head,.logic-table-cell{min-width:0;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(22px,3vw,39px);background:#fff;border:1px solid #e8e0f1;line-height:1}
 .logic-head{background:#efe9ff}.logic-head.corner{font-size:24px}
-.logic-table-cell{gap:0}.logic-table-cell span{font-size:.72em}.logic-table-cell.missing{background:#fdf0cb;color:#68459c;font-weight:900;font-size:43px}
+.logic-table-cell{gap:1px}.logic-table-cell span{display:inline-flex;align-items:center;justify-content:center;flex:0 0 48%;max-width:48%;min-width:0;font-size:clamp(29px,3.5vw,44px);line-height:1}.logic-table-cell.missing{background:#fdf0cb;color:#68459c;font-weight:900;font-size:43px}
 .table-options{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .table-option{display:flex;align-items:center;gap:2px;border:2px solid #e6dbf4;background:#fff;border-radius:16px;padding:7px 11px;font-size:34px;min-height:67px;cursor:pointer}
 .table-option b{font-size:17px;color:#8d79b8}
@@ -81,12 +81,13 @@ button.diff-cell:hover,button.diff-cell:focus-visible{border-color:#7951cf;outli
  .memory-cards{gap:7px}.memory-tile{width:clamp(65px,18vw,83px);height:clamp(65px,18vw,83px);font-size:clamp(40px,11vw,51px)}
  .memory-print{grid-template-columns:1fr}
  .logic-head,.logic-table-cell{font-size:clamp(21px,7vw,38px)}
+ .logic-table-cell span{font-size:clamp(26px,7.2vw,40px)}
  .table-option{font-size:30px;padding:7px;min-height:64px}
  .sudoku-cell{font-size:clamp(34px,10vw,49px)}
 }
 @media print{
  .print-task .memory-print{grid-template-columns:1fr 1fr}.print-task .memory-tile{width:12mm;height:12mm;font-size:24pt}
- .print-task .logic-table{max-width:115mm}.print-task .logic-head,.print-task .logic-table-cell{font-size:25pt}
+ .print-task .logic-table{max-width:115mm}.print-task .logic-head,.print-task .logic-table-cell{font-size:25pt}.print-task .logic-table-cell span{font-size:24pt}
  .print-task .table-option{font-size:22pt;min-height:13mm}
  .print-task .sudoku-grid{width:100mm;margin:5mm auto}
  .print-task .sudoku-cell{font-size:24pt}

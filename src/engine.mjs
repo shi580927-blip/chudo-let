@@ -175,7 +175,15 @@ function taskFor(kind,age,theme,r){
   const base=shuffleUnique(combined,r,age<=5?4:6);
   const missing=integer(r,base.length),changed=base.slice();
   changed[missing]=null;
-  return {...q,prompt:"Запомни предметы. Затем узнай, какой предмет исчез.",base,changed,position:missing,answer:base[missing],options:shuffle(base,r)};
+  // Варианты-ловушки берём ТОЛЬКО из предметов, не показанных ребёнку.
+  const answer=base[missing];
+  const distractors=shuffleUnique(combined.filter(icon=>!base.includes(icon)),r,3);
+  const options=shuffle([answer,...distractors],r);
+  if(options[0]===answer){
+   const other=1+integer(r,options.length-1);
+   [options[0],options[other]]=[options[other],options[0]];
+  }
+  return {...q,prompt:"Запомни предметы. Затем узнай, какой предмет исчез.",base,changed,position:missing,answer,options};
  }
  if(kind==="table"){
   const n=age>=10?4:3,rows=shuffleUnique(t.a,r,n),columns=shuffleUnique(t.b,r,n);
@@ -247,9 +255,12 @@ export function validateTask(t){
  if(!t||!READY_IDS.includes(t.kind))return false;
  if(t.kind==="memory"){
   if(!Array.isArray(t.base)||!Array.isArray(t.changed)||!Array.isArray(t.options)||t.base.length<4||t.base.length!==t.changed.length)return false;
-  if(new Set(t.base).size!==t.base.length||new Set(t.options).size!==t.options.length||t.options.length!==t.base.length)return false;
+  if(new Set(t.base).size!==t.base.length||t.options.length!==4||new Set(t.options).size!==4)return false;
   const missing=t.base.flatMap((x,i)=>x!==t.changed[i]?[i]:[]);
-  return missing.length===1&&missing[0]===t.position&&t.changed[t.position]===null&&t.answer===t.base[t.position]&&t.options.includes(t.answer)&&t.options.every(x=>t.base.includes(x));
+  const correct=t.answer===t.base[t.position]&&t.options.filter(x=>x===t.answer).length===1;
+  const distractors=t.options.filter(x=>x!==t.answer);
+  return missing.length===1&&missing[0]===t.position&&t.changed[t.position]===null&&
+   correct&&t.options[0]!==t.answer&&distractors.length===3&&distractors.every(x=>!t.base.includes(x));
  }
  if(t.kind==="table"){
   if(!Array.isArray(t.rows)||!Array.isArray(t.columns)||!Array.isArray(t.options)||!Array.isArray(t.missing))return false;

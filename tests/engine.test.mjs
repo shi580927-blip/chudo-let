@@ -72,6 +72,11 @@ test("Что изменилось: исчезает ровно один из у�
   assert.equal(validateTask(t),true);assert.equal(t.changed.filter(x=>x===null).length,1);
   assert.equal(checkAnswer(t,t.answer),true);
   assert.equal(checkAnswer(t,t.options.find(x=>x!==t.answer)),false);
+  assert.equal(t.options.length,4);
+  assert.notEqual(t.options[0],t.answer);
+  assert.equal(t.options.filter(x=>x===t.answer).length,1);
+  assert.ok(t.options.filter(x=>x!==t.answer).every(x=>!t.base.includes(x)));
+  assert.equal(validateTask({...t,options:[t.answer,...t.options.filter(x=>x!==t.answer)]}),false);
  }
 });
 test("Таблица признаков: однозначная пара на пересечении",()=>{

@@ -117,7 +117,9 @@ function renderNav(){
 }
 function renderTask(){
  const t=task(),ready=state.answer!==null;
- let feedback=state.checked?'<div class="feedback '+(checkAnswer(t,state.answer)?'good':'')+'" role="status">'+(checkAnswer(t,state.answer)?"✓ Верно! Отличная работа.":"Не совсем. Можно попробовать ещё раз!")+'</div>':'';
+ let feedback=state.checked==="incomplete"
+  ?'<div class="feedback" role="status">Закончите задание полностью для проверки — заполните все пустые клетки.</div>'
+  :state.checked?'<div class="feedback '+(checkAnswer(t,state.answer)?'good':'')+'" role="status">'+(checkAnswer(t,state.answer)?"✓ Верно! Отличная работа.":"Не совсем. Можно попробовать ещё раз!")+'</div>':'';
  $("activity").innerHTML='<div class="activity-intro"><div><span class="group">'+escapeHtml(CATALOG.find(c=>c.id===t.kind).group)+' · Задание '+(state.index+1)+'</span><h3>'+escapeHtml(t.title)+'</h3></div><span class="status ready">● Можно играть</span></div><p class="prompt">'+promptHTML(t)+'</p><div class="game-board">'+board(t)+'</div><div class="game-actions"><button class="primary" data-action="check" '+(!ready?'disabled':'')+'>✓ Проверить</button><button class="ghost" data-action="reset">↻ Сначала</button><button class="ghost" data-action="hint">? Подсказка</button></div>'+(state.hint?'<div class="answer-hint">'+escapeHtml(hintFor(t))+'</div>':'')+feedback;
  $("taskCounter").textContent="Задание "+(state.index+1)+" из "+state.bundle.tasks.length;
  $("prevBtn").disabled=state.index===0;$("nextBtn").disabled=state.index===state.bundle.tasks.length-1;
@@ -163,7 +165,12 @@ $("activity").addEventListener("click",event=>{
  if(action==="hint"){state.hint=!state.hint;}
  if(action==="check"){
   if(state.answer===null)return;
-  state.checked=true;if(checkAnswer(t,state.answer))state.done.add(state.index);
+  if(t.kind==="sudoku"&&(!Array.isArray(state.answer)||state.answer.some(v=>v===null))){
+   state.checked="incomplete";
+  }else{
+   state.checked=true;
+   if(checkAnswer(t,state.answer))state.done.add(state.index);
+  }
  }
  renderTask();
 });
