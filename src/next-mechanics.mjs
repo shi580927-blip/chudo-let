@@ -383,7 +383,7 @@ export function tangramSvg(task,placed=null,{small=false}={}){
    '<text x="'+position[0]+'" y="'+(position[1]+1)+'" font-size="'+fontSize+'" font-weight="900" text-anchor="middle" dominant-baseline="middle" fill="#473278">'+(i+1)+'</text></g>';
  }
  // Более плотное кадрирование трёх переработанных сцен, без обрезки элементов.
- const frame=task.figure==="rocket"?[80,-6,240,326]:task.figure==="castle"?[70,9,260,322]:task.figure==="snail"?[49,35,300,284]:[35,-35,330,370];
+ const frame=task.figure==="rocket"?[80,-6,240,326]:task.figure==="castle"?[70,9,260,322]:task.figure==="snail"?[37,30,326,292]:[35,-35,330,370];
  return '<svg class="tangram-art" viewBox="'+frame.join(" ")+'" role="img" aria-label="Геометрическая фигура '+task.figureName+'">'+
   '<rect x="'+frame[0]+'" y="'+frame[1]+'" width="'+frame[2]+'" height="'+frame[3]+'" fill="'+(small?"#fff":"#fffef7")+'" rx="14"/>'+
   shapes+'</svg>';
