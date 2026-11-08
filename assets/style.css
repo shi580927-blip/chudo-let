@@ -376,3 +376,30 @@ button.tangram-slot{cursor:pointer}.tangram-slot b{font-size:19px}
  .print-task .tangram-tray{gap:2mm;margin:2mm auto 3mm}
  .print-task .tangram-tray-item{width:20mm;height:20mm;padding:.6mm}
 }
+
+/* Завершённые механики: текст, вывод, печать и адаптивные карточки. */
+.phrase-board,.detective-board,.branch-board,.team-board{display:grid;gap:14px;max-width:850px;margin:auto}
+.phrase-sentence{font-size:clamp(19px,2.5vw,29px);font-weight:800;color:#523880;padding:18px 20px;border-radius:16px;background:#fffaf0}
+.final-choices,.branch-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.final-option,.branch-choice,.team-reveal{border:2px solid #d5c2ec;background:#fff;border-radius:14px;padding:14px 11px;cursor:pointer;color:#43315e;font:inherit;font-weight:800}
+.final-option.selected,.detective-suspect.selected{border-color:#7346c9;background:#ede5ff}
+.detective-clues{display:flex;justify-content:center;gap:15px;flex-wrap:wrap}
+.detective-clues>b{display:flex;align-items:center;gap:8px;border-radius:13px;padding:10px 17px;background:#fffaf0;font-size:24px}
+.detective-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.detective-suspect{border:2px solid #ddd1ef;border-radius:15px;background:#fff;min-height:125px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:12px;cursor:pointer;font:inherit}
+.detective-avatar{font-size:35px}.detective-traits{font-size:32px}
+.branch-step{padding:15px;border:2px solid #ded0f3;border-radius:15px;background:#fff}
+.branch-step>p{font-size:19px;font-weight:800}
+.branch-stage{font-size:13px;color:#704abb;font-weight:900}
+.branch-error{border-radius:12px;background:#fff0db;color:#775025;padding:10px}
+.branch-finish{padding:20px;border-radius:15px;background:#e7f8e9;font-size:22px;font-weight:800}
+.team-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.team-role{border:2px solid #d5c9ef;border-radius:15px;background:white;padding:12px;display:flex;flex-direction:column;gap:10px}
+.team-role>span{font-size:35px;text-align:center}.team-role>p{font-size:14px;line-height:1.5;overflow-wrap:anywhere;flex:1}
+.team-reveal{padding:8px;font-size:13px}
+.team-code{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px}
+.team-code>span{width:43px;height:53px;display:grid;place-items:center;background:#fff;border:2px solid #b7a5d8;border-radius:12px;font-size:25px;font-weight:900}
+.team-keypad{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+.team-keypad button{min-width:43px;min-height:43px;border-radius:11px;background:#fff;border:2px solid #d5c2ec;color:#523880;font-weight:900}
+@media(max-width:690px){.team-cards{grid-template-columns:1fr}.final-choices,.branch-choices{grid-template-columns:1fr}.detective-avatar,.detective-traits{font-size:27px}}
+@media print{.print-task .team-cards{grid-template-columns:repeat(3,1fr)}.print-task .team-role{break-inside:avoid;border:1px solid #bbb;padding:3mm}.print-task .detective-suspect,.print-task .branch-step{break-inside:avoid}.print-task .phrase-sentence{background:#fff}.print-task .branch-choice{font-weight:400;border:1px solid #aaa}.print-task .branch-board,.print-task .team-board{gap:2mm}}

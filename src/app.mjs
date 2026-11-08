@@ -21,7 +21,7 @@ function promptHTML(t){
  return text;
 }
 function task(){return state.bundle.tasks[state.index];}
-function reset(){state.answer=null;state.checked=false;state.hint=false;state.phase="observe";state.activeCell=null;}
+function reset(){state.answer=null;state.checked=false;state.hint=false;state.phase="observe";state.activeCell=null;state.branchMessage="";state.revealedRoles=new Set();}
 function emojiGrid(arr,compact=false,theme=state.bundle.theme){
  return '<div class="emoji-grid'+(compact?' compact':'')+'">'+arr.map(x=>'<div class="emoji-tile">'+draw(x,theme)+'</div>').join("")+'</div>';
 }
@@ -47,6 +47,49 @@ function mazeSvg(t,print=false){
 }
 function board(t,print=false){
  const pick=(opts)=>pickButtons(opts,print,t.theme);
+ if(t.kind==="phrase"){
+  const answers=t.options.map(word=>{
+   const chosen=!print&&state.answer===word,tag=print?"span":"button";
+   return '<'+tag+' class="final-option'+(chosen?' selected':'')+'"'+(print?'':' type="button" data-action="pick" data-value="'+escapeHtml(word)+'"')+'>'+escapeHtml(word)+'</'+tag+'>';
+  }).join("");
+  return '<section class="phrase-board"><p class="phrase-sentence">'+escapeHtml(t.sentence)+'</p><div class="final-choices">'+answers+'</div></section>';
+ }
+ if(t.kind==="detective"){
+  const hints='<div class="detective-clues"><b>Улика 1: '+draw(t.clues[0],t.theme)+'</b><b>Улика 2: '+draw(t.clues[1],t.theme)+'</b></div>';
+  const suspects=t.suspects.map(s=>{
+   const chosen=!print&&state.answer===s.id,tag=print?"div":"button";
+   return '<'+tag+' class="detective-suspect'+(chosen?' selected':'')+'"'+(print?'':' type="button" data-action="pick" data-value="'+s.id+'"')+'><span class="detective-avatar">'+draw(s.avatar,t.theme)+'</span><b>Подозреваемый '+escapeHtml(s.id)+'</b><span class="detective-traits">'+draw(s.itemA,t.theme)+' '+draw(s.itemB,t.theme)+'</span></'+tag+'>';
+  }).join("");
+  return '<section class="detective-board"><p>Найди персонажа, у которого есть оба предмета из улик.</p>'+hints+'<div class="detective-grid">'+suspects+'</div></section>';
+ }
+ if(t.kind==="branching"){
+  const chosen=print?[]:Array.isArray(state.answer)?state.answer:[];
+  const stage=chosen.length;
+  const showStep=(step,i)=>{
+   const opts=step.choices.map((x,j)=>{
+    const tag=print?"span":"button";
+    return '<'+tag+' class="branch-choice"'+(print?'':' type="button" data-action="branchChoose" data-step="'+i+'" data-choice="'+j+'"')+'>'+escapeHtml(x.text)+'</'+tag+'>';
+   }).join("");
+   return '<div class="branch-step"><span class="branch-stage">Этап '+(i+1)+' из 3</span><p>'+escapeHtml(step.scene)+'</p><div class="branch-choices">'+opts+'</div></div>';
+  };
+  if(print)return '<div class="branch-board"><p><b>Цель:</b> '+escapeHtml(t.goal)+'</p>'+t.steps.map(showStep).join("")+'</div>';
+  if(stage>=3)return '<div class="branch-board"><p class="branch-finish">🎉 Путь пройден! '+escapeHtml(t.goal)+'</p><p>Нажми «Проверить», чтобы завершить приключение.</p></div>';
+  return '<div class="branch-board"><p><b>Цель:</b> '+escapeHtml(t.goal)+'</p>'+showStep(t.steps[stage],stage)+(state.branchMessage?'<p class="branch-error" role="status">'+escapeHtml(state.branchMessage)+'</p>':'')+'</div>';
+ }
+ if(t.kind==="team"){
+  const answer=print?"":typeof state.answer==="string"?state.answer:"";
+  const revealed=state.revealedRoles??new Set();
+  const roles=t.clues.map((clue,i)=>{
+   const opened=print||revealed.has(i);
+   return '<article class="team-role"><b>'+escapeHtml(clue.role)+'</b><span>'+draw(clue.icon,t.theme)+'</span>'+
+     (opened?'<p>'+escapeHtml(clue.riddle)+'</p>':'<p>Личная карточка участника закрыта.</p>')+
+     (print?'':('<button type="button" class="team-reveal" data-action="teamReveal" data-role="'+i+'">'+(opened?'Скрыть':'Открыть')+' карточку</button>'))+'</article>';
+  }).join("");
+  const digitButtons=print?'':('<div class="team-keypad">'+Array.from({length:9},(_,i)=>'<button type="button" data-action="teamDigit" data-value="'+(i+1)+'">'+(i+1)+'</button>').join("")+
+   '<button type="button" class="team-erase" data-action="teamBack">⌫</button></div>');
+  return '<section class="team-board"><p>Каждый участник узнаёт одну цифру. Назовите цифры по порядку ролей.</p><div class="team-cards">'+roles+'</div>'+
+   '<p class="team-code">Секретный код: '+Array.from({length:3},(_,i)=>'<span>'+(answer[i]??'□')+'</span>').join("")+'</p>'+digitButtons+'</section>';
+ }
  if(t.kind==="tangram"){
   const n=t.parts.length,placed=print?Array(n).fill(null):Array.isArray(state.answer)?state.answer:Array(n).fill(null);
   const slots=t.parts.map((part,i)=>{
@@ -273,7 +316,7 @@ function board(t,print=false){
  return "<p>Механика пока не поддерживается.</p>";
 }
 function hintFor(t){
- switch(t.kind){case"tangram":return"Посмотри на контур каждой фигуры и выбери подходящую деталь из набора.";case"mathpath":return"Начни со стартового числа. Каждый раз выполни действие, а потом выбери результат.";case"shop":return"Сначала выбери указанное количество товаров. Сложи цены — сумма должна совпасть с кошельком.";case"puzzle":return"Внимательно посмотри на образец. Сначала найди верхний левый фрагмент.";case"symmetry":return"Первая клетка слева должна оказаться последней в правой половинке той же строки.";case"backpack":return"Сначала отбери нужные группы, затем сложи вес и проверь золотую звезду.";case"word":return"Посмотри на картинку, назови предмет и выбирай буквы по одной.";case"syllables":return"Произнеси название предмета по слогам. Сначала выбери первый слог.";case"crossword":return"Начни со слова, которое легко узнать по картинке. В месте пересечения буква одна и та же.";case"map":return"Найди флажок. Следуй стрелкам по порядку, каждую стрелку считай одним шагом.";case"cipher":return"Для каждого значка найди букву в ключе. Записывай буквы по очереди.";case"number":return"Большой квадрат — сто, полоска из десяти точек — десять, маленький круг — один.";case"memory":return"Запомни все значки и их места, затем нажми кнопку и найди исчезнувший.";case"table":return"Сравни нужную строку и столбец: на пересечении должны быть оба значка.";case"sudoku":return"В каждой строке, столбце и квадрате 2×2 значки не повторяются.";case"differences":return"Сравни предметы в одинаковых клетках обеих картинок — начни с верхнего ряда.";case"find":case"count":return"Посмотри на каждую строчку слева направо и отмечай найденные значки.";case"odd":return"Пять картинок можно объединить в одну группу, а одну — нет.";case"shadow":return"Сравни общий контур, а не цвет.";case"sequence":return"Посмотри, через сколько шагов повторяется рисунок.";case"sort":return"Названия корзин помогут понять общее свойство.";case"pair":return"Подумай, что обычно используется вместе.";case"maze":return"Из каждой клетки можно перейти только туда, где нет стенки.";case"compare":return"Сосчитай предметы с каждой стороны.";case"story":return"Что произошло сначала, а что могло случиться только потом?";default:return"Посмотри внимательно на условие.";}
+ switch(t.kind){case"phrase":return"Произнеси всё предложение. Какое слово подходит по смыслу?";case"detective":return"Каждая улика подходит двум героям. Найди того, кому подходят обе сразу.";case"branching":return"Подумай, какое действие поможет герою приблизиться к цели. Неверный выбор можно исправить.";case"team":return"Один участник считает предметы, второй складывает, третий вычитает. Поделитесь ответами.";case"tangram":return"Посмотри на контур каждой фигуры и выбери подходящую деталь из набора.";case"mathpath":return"Начни со стартового числа. Каждый раз выполни действие, а потом выбери результат.";case"shop":return"Сначала выбери указанное количество товаров. Сложи цены — сумма должна совпасть с кошельком.";case"puzzle":return"Внимательно посмотри на образец. Сначала найди верхний левый фрагмент.";case"symmetry":return"Первая клетка слева должна оказаться последней в правой половинке той же строки.";case"backpack":return"Сначала отбери нужные группы, затем сложи вес и проверь золотую звезду.";case"word":return"Посмотри на картинку, назови предмет и выбирай буквы по одной.";case"syllables":return"Произнеси название предмета по слогам. Сначала выбери первый слог.";case"crossword":return"Начни со слова, которое легко узнать по картинке. В месте пересечения буква одна и та же.";case"map":return"Найди флажок. Следуй стрелкам по порядку, каждую стрелку считай одним шагом.";case"cipher":return"Для каждого значка найди букву в ключе. Записывай буквы по очереди.";case"number":return"Большой квадрат — сто, полоска из десяти точек — десять, маленький круг — один.";case"memory":return"Запомни все значки и их места, затем нажми кнопку и найди исчезнувший.";case"table":return"Сравни нужную строку и столбец: на пересечении должны быть оба значка.";case"sudoku":return"В каждой строке, столбце и квадрате 2×2 значки не повторяются.";case"differences":return"Сравни предметы в одинаковых клетках обеих картинок — начни с верхнего ряда.";case"find":case"count":return"Посмотри на каждую строчку слева направо и отмечай найденные значки.";case"odd":return"Пять картинок можно объединить в одну группу, а одну — нет.";case"shadow":return"Сравни общий контур, а не цвет.";case"sequence":return"Посмотри, через сколько шагов повторяется рисунок.";case"sort":return"Названия корзин помогут понять общее свойство.";case"pair":return"Подумай, что обычно используется вместе.";case"maze":return"Из каждой клетки можно перейти только туда, где нет стенки.";case"compare":return"Сосчитай предметы с каждой стороны.";case"story":return"Что произошло сначала, а что могло случиться только потом?";default:return"Посмотри внимательно на условие.";}
 }
 function renderNav(){
  $("taskNav").innerHTML=state.bundle.tasks.map((t,i)=>'<button class="task-pill'+(i===state.index?' active':'')+(state.done.has(i)?' done':'')+'" data-task="'+i+'" title="'+escapeHtml(t.title)+'" aria-label="Задание '+(i+1)+'">'+(i+1)+'</button>').join("");
@@ -281,7 +324,7 @@ function renderNav(){
 function renderTask(){
  const t=task(),ready=state.answer!==null;
  let feedback=state.checked==="incomplete"
-  ?'<div class="feedback" role="status">'+(t.kind==="tangram"?"Сначала расставь все геометрические детали.":t.kind==="mathpath"?"Выбери число на каждом шаге дорожки.":t.kind==="shop"?"Сначала выбери ровно "+t.take+" предмета.":t.kind==="puzzle"?"Сначала собери картинку полностью — расставь все фрагменты.":t.kind==="backpack"?"Сначала выбери ровно "+t.count+" предмета для рюкзака.":t.kind==="sudoku"?"Закончите задание полностью для проверки — заполните все пустые клетки.":t.kind==="crossword"?"Заполни все белые клетки кроссворда, затем проверь ответ.":"Сначала заполни все буквы или цифры, затем проверим ответ.")+'</div>'
+  ?'<div class="feedback" role="status">'+(t.kind==="tangram"?"Сначала расставь все геометрические детали.":t.kind==="mathpath"?"Выбери число на каждом шаге дорожки.":t.kind==="shop"?"Сначала выбери ровно "+t.take+" предмета.":t.kind==="puzzle"?"Сначала собери картинку полностью — расставь все фрагменты.":t.kind==="backpack"?"Сначала выбери ровно "+t.count+" предмета для рюкзака.":t.kind==="sudoku"?"Закончите задание полностью для проверки — заполните все пустые клетки.":t.kind==="crossword"?"Заполни все белые клетки кроссворда, затем проверь ответ.":t.kind==="branching"?"Пройди все три развилки, затем проверь результат.":t.kind==="team"?"Соберите все три цифры командного кода, затем проверьте ответ.":"Сначала заполни все буквы или цифры, затем проверим ответ.")+'</div>'
   :state.checked?'<div class="feedback '+(checkAnswer(t,state.answer)?'good':'')+'" role="status">'+(checkAnswer(t,state.answer)?"✓ Верно! Отличная работа.":"Не совсем. Можно попробовать ещё раз!")+'</div>':'';
  $("activity").innerHTML='<div class="activity-intro"><div><span class="group">'+escapeHtml(CATALOG.find(c=>c.id===t.kind).group)+' · Задание '+(state.index+1)+'</span><h3>'+escapeHtml(t.title)+'</h3></div><span class="status ready">● Можно играть</span></div><p class="prompt">'+promptHTML(t)+'</p><div class="game-board">'+board(t)+'</div><div class="game-actions"><button class="primary" data-action="check" '+(!ready?'disabled':'')+'>✓ Проверить</button><button class="ghost" data-action="reset">↻ Сначала</button><button class="ghost" data-action="hint">? Подсказка</button></div>'+(state.hint?'<div class="answer-hint">'+escapeHtml(hintFor(t))+'</div>':'')+feedback;
  $("taskCounter").textContent="Задание "+(state.index+1)+" из "+state.bundle.tasks.length;
@@ -311,6 +354,29 @@ function tryMove(cell){
 $("activity").addEventListener("click",event=>{
  const target=event.target.closest("[data-action]");if(!target)return;
  const action=target.dataset.action,t=task();
+ if(action==="branchChoose"&&t.kind==="branching"){
+  const idx=Number(target.dataset.step),choice=Number(target.dataset.choice);
+  const prev=Array.isArray(state.answer)?state.answer:[];
+  if(idx===prev.length&&idx<t.steps.length&&[0,1].includes(choice)){
+   if(choice===t.steps[idx].correctIndex){state.answer=[...prev,choice];state.branchMessage="";}
+   else {state.answer=prev.length?prev:null;state.branchMessage=t.steps[idx].badEffect;}
+   state.checked=false;
+  }
+ }
+ if(action==="teamReveal"&&t.kind==="team"){
+  const i=Number(target.dataset.role),open=state.revealedRoles??new Set();
+  if(Number.isInteger(i)&&i>=0&&i<t.clues.length){
+   if(open.has(i))open.delete(i);else open.add(i);
+   state.revealedRoles=open;
+  }
+ }
+ if(action==="teamDigit"&&t.kind==="team"){
+  const digit=String(target.dataset.value),value=typeof state.answer==="string"?state.answer:"";
+  if(/^[1-9]$/.test(digit)&&value.length<3){state.answer=value+digit;state.checked=false;}
+ }
+ if(action==="teamBack"&&t.kind==="team"){
+  state.answer=(typeof state.answer==="string"?state.answer:"").slice(0,-1);state.checked=false;
+ }
  if(action==="tangramSlot"&&t.kind==="tangram"){
   const i=Number(target.dataset.cell);
   if(Number.isInteger(i)&&i>=0&&i<t.parts.length){
@@ -437,7 +503,9 @@ $("activity").addEventListener("click",event=>{
  if(action==="hint"){state.hint=!state.hint;}
  if(action==="check"){
   if(state.answer===null)return;
-  if(t.kind==="tangram"&&(!Array.isArray(state.answer)||state.answer.some(v=>v===null))){state.checked="incomplete";
+  if(t.kind==="branching"&&(!Array.isArray(state.answer)||state.answer.length!==3)){state.checked="incomplete";
+  }else if(t.kind==="team"&&(typeof state.answer!=="string"||state.answer.length!==3)){state.checked="incomplete";
+  }else if(t.kind==="tangram"&&(!Array.isArray(state.answer)||state.answer.some(v=>v===null))){state.checked="incomplete";
   }else if(t.kind==="mathpath"&&(!Array.isArray(state.answer)||state.answer.length!==t.steps.length||state.answer.some(v=>v===null))){state.checked="incomplete";
   }else if(t.kind==="shop"&&(!Array.isArray(state.answer)||state.answer.length!==t.take)){state.checked="incomplete";
   }else if(t.kind==="puzzle"&&(!Array.isArray(state.answer)||state.answer.some(v=>v===null))){
