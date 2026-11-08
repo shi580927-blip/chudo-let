@@ -553,3 +553,45 @@ test("История по порядку: отмечаем ограничени�
   assert.equal(new Set(tasks.map(contentKey)).size,1);
  }
 });
+
+
+test("ART/GAME: собранные ракета, замок и улитка имеют пять уникальных взаимосвязанных деталей",()=>{
+ const expectations={
+  rocket:["body","nose","left-fin","right-fin","window"],
+  castle:["wall","left-tower","right-tower","gate","flag"],
+  snail:["body","head","shell","spiral","feelers"]
+ };
+ for(const figure of Object.keys(expectations))for(const age of ["5-6","7-9","10-12"])for(let seed=0;seed<80;seed++){
+  const t=makeTask("tangram",age,"clouds",seed,null,figure);
+  assert.deepEqual(t.parts.map(p=>p.id),expectations[figure]);
+  assert.equal(new Set(t.parts.map(p=>p.shape)).size,5);
+  assert.equal(validateTask(t),true);
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,t.tray),false);
+  const empty=tangramSvg(t,Array(5).fill(null));
+  const full=tangramSvg(t,t.answer);
+  assert.equal((empty.match(/class="tangram-slot-number"/g)||[]).length,5);
+  assert.equal((full.match(/class="tangram-slot-number"/g)||[]).length,5);
+  assert.doesNotMatch(empty,/undefined|NaN/);
+  for(const p of t.parts){
+   assert.match(tangramPieceSvg(p),/<svg/);
+   assert.match(full,new RegExp(p.color));
+  }
+  const f=empty.match(/viewBox="([^"]+)"/);
+  assert.ok(f);
+  assert.ok(Number(f[1].split(" ")[2])<=300,"Кадрирование должно быть плотным");
+ }
+});
+test("Ракета: два стабилизатора присоединены к корпусу; улитка без лишнего листа",()=>{
+ const rocket=makeTask("tangram","5-6","clouds",1,null,"rocket");
+ const p=Object.fromEntries(rocket.parts.map(x=>[x.id,x]));
+ assert.ok(p["left-fin"].x+43>=p.body.x-40);
+ assert.ok(p["right-fin"].x-43<=p.body.x+40);
+ assert.ok(p.nose.y+35>=p.body.y-84);
+ const snail=makeTask("tangram","5-6","clouds",1,null,"snail");
+ const q=Object.fromEntries(snail.parts.map(x=>[x.id,x]));
+ assert.equal(q.leaf,undefined);
+ assert.ok(q.head.y+63>=q.body.y-28);
+ assert.ok(q.shell.y+73>=q.body.y-28);
+ assert.ok(q.feelers.y+52>=q.head.y-73);
+});

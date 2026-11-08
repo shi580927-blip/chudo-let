@@ -18,11 +18,12 @@ const COMPOSITIONS=Object.freeze({
   ["chimney","thin-rectangle",260,70,.8,"#edaaa7",0]
  ],
  rocket:[
-  ["body","rectangle",200,180,1.4,"#bfa0f7",0],
-  ["tip","triangle",200,60,1.15,"#ffca72",0],
-  ["window","circle",200,170,.76,"#9edbff",0],
-  ["left-fin","trapezoid",116,248,.76,"#f3aca2",-90],
-  ["right-fin","diamond",284,248,.68,"#a4e5c1",90]
+  // Стабилизаторы примыкают к корпусу; нос и иллюминатор не отделены.
+  ["body","rocket-body",200,185,1,"#bfa0f7",0],
+  ["nose","rocket-nose",200,81,1,"#ffcb7b",0],
+  ["left-fin","rocket-left-fin",147,245,1,"#f3aca2",0],
+  ["right-fin","rocket-right-fin",253,245,1,"#a4e5c1",0],
+  ["window","rocket-window",200,182,1,"#9edbff",0]
  ],
  robot:[
   // Пять узнаваемых по форме деталей: голова, туловище, две разные руки, двойные ботинки.
@@ -70,11 +71,12 @@ const COMPOSITIONS=Object.freeze({
   ["basket","balloon-basket",200,279,1,"#d6b18b",0]
  ],
  castle:[
-  ["wall","square",200,224,1.45,"#d5c0f4",0],
-  ["tower","rectangle",122,186,1.07,"#b7d4f3",0],
-  ["roof","triangle",122,104,.96,"#f6be83",0],
-  ["gate","rounded-square",220,263,.57,"#dbc4ae",0],
-  ["flag","pennant",267,97,.65,"#e9b3c3",90]
+  // Две примыкающие башни разной формы + стена с зубцами + арка ворот.
+  ["wall","castle-wall",200,226,1,"#d5c0f4",0],
+  ["left-tower","castle-left-tower",130,172,1,"#b7d4f3",0],
+  ["right-tower","castle-right-tower",270,172,1,"#c9b0ec",0],
+  ["gate","castle-gate",200,268,1,"#dbc4ae",0],
+  ["flag","castle-flag",274,61,1,"#f1ada9",0]
  ],
 
  mushroom:[
@@ -148,11 +150,13 @@ const COMPOSITIONS=Object.freeze({
   ["face","cat-face",171,134,1,"#fff4db",0]
  ],
  snail:[
-  ["body","snail-body",195,259,1,"#acd5b3",0],
-  ["shell","snail-shell",172,170,1,"#d5b6ec",0],
-  ["spiral","snail-spiral",172,170,1,"#f6d7af",0],
-  ["feelers","snail-feelers",284,132,1,"#e4ba9d",0],
-  ["leaf","snail-leaf",289,285,1,"#a1d9b2",0]
+  // Улитка целиком: опорная нога, переходящая в голову, домик-раковина,
+  // спираль и усики с глазками. Лист как лишний объект убран.
+  ["body","snail-foot",193,262,1,"#acd5b3",0],
+  ["head","snail-head",281,191,1,"#b6e2b5",0],
+  ["shell","snail-shell-v2",160,191,1,"#d5b6ec",0],
+  ["spiral","snail-spiral-v2",160,194,1,"#f4cd9d",0],
+  ["feelers","snail-eyestalks",279,108,1,"#e4ba9d",0]
  ],
  submarine:[
   ["hull","submarine-hull",194,211,1,"#a7d9ea",0],
@@ -205,6 +209,23 @@ const SHAPES={
  circle:'<circle r="41"/>',
  diamond:'<polygon points="0,-53 44,0 0,53 -44,0"/>',
  trapezoid:'<polygon points="-32,-34 32,-34 53,34 -53,34"/>',
+
+ // Переработанные, замкнутые игровые контуры; соединения проверяются геометрически.
+ 'rocket-body':'<path d="M-40 -80 Q-43 -84 -31 -84 H31 Q43 -84 40 -80 V67 Q37 84 21 92 H-21 Q-37 84 -40 67Z"/>',
+ 'rocket-nose':'<path d="M-50 35 Q-40 -21 -6 -70 Q0 -80 6 -70 Q40 -21 50 35Z"/>',
+ 'rocket-left-fin':'<path d="M13 -29 L43 -21 L43 47 L-7 57 Q-35 57 -47 43 Q-30 6 -12 -27Z"/>',
+ 'rocket-right-fin':'<path d="M-13 -29 L-43 -21 L-43 47 L0 57 Q29 61 47 43 L26 9 L12 -27Z"/>',
+ 'rocket-window':'<path fill-rule="evenodd" d="M0 -26 A26 26 0 1 1 0 26 A26 26 0 1 1 0 -26Z M0 -14 A14 14 0 1 0 0 14 A14 14 0 1 0 0 -14Z"/>',
+ 'castle-wall':'<path d="M-83 -54 H-66 V-73 H-45 V-54 H-11 V-73 H11 V-54 H45 V-73 H66 V-54 H83 V78 H-83Z"/>',
+ 'castle-left-tower':'<path d="M-39 -40 L-40 -60 L-50 -60 L0 -110 L50 -60 L40 -60 L39 90 H-39Z"/>',
+ 'castle-right-tower':'<path d="M-38 -84 H-28 V-102 H-6 V-84 H14 V-102 H35 V-84 H42 V90 H-38Z"/>',
+ 'castle-gate':'<path d="M-31 45 V-8 C-31 -29 -16 -48 0 -48 C18 -48 31 -29 31 -8 V45Z"/>',
+ 'castle-flag':'<path d="M-7 64 V-34 H4 V-27 H46 Q37 -12 24 -5 L48 12 H4 V64Z"/>',
+ 'snail-foot':'<path d="M-124 22 Q-110 -20 -77 -28 Q-49 -37 -9 -19 Q32 -36 69 -30 Q110 -22 129 18 Q119 38 88 41 H-87 Q-116 40 -124 22Z"/>',
+ 'snail-head':'<path d="M-31 63 Q-48 43 -37 14 Q-35 -5 -28 -29 Q-25 -67 0 -73 Q26 -78 36 -47 Q48 -7 40 30 Q41 59 14 63Z"/>',
+ 'snail-shell-v2':'<path d="M-78 55 C-111 5 -87 -63 -38 -81 C10 -103 77 -71 85 -15 Q94 43 56 73 Q-1 98 -55 69Z"/>',
+ 'snail-spiral-v2':'<path d="M46 31 Q63 -8 30 -44 Q1 -69 -32 -41 Q-58 -19 -41 17 Q-19 45 13 30 Q29 20 21 0 Q13 -16 -4 -9 Q-14 -1 -7 7" fill="none" stroke-width="11" stroke-linecap="round"/>',
+ 'snail-eyestalks':'<path d="M-30 52 L-30 -30 M26 52 L28 -32" stroke-width="10" stroke-linecap="round" fill="none"/><circle cx="-30" cy="-38" r="15"/><circle cx="28" cy="-40" r="15"/><circle cx="-26" cy="-41" r="4" fill="#70568f" stroke="none"/><circle cx="32" cy="-43" r="4" fill="#70568f" stroke="none"/>',
  // Пять уникальных узнаваемых геометрических силуэтов лодочки.
  'ship-mast':'<path d="M-9 -101 H9 L10 96 H-10 Z"/>',
  'ship-sail':'<path d="M-48 -90 Q-38 -96 -27 -79 C9 -42 54 22 67 64 Q12 70 -47 68 Z"/>',
@@ -334,13 +355,13 @@ export function tangramSvg(task,placed=null,{small=false}={}){
  // Метки находятся ВНУТРИ контуров и прорисовываются поверх любой поставленной детали.
  const anchors={
   house:{body:[254,218],roof:[200,90],door:[215,245],window:[165,190],chimney:[260,70]},
-  rocket:{body:[200,241],tip:[200,60],window:[200,170]},
+  rocket:{body:[181,238],nose:[200,55],"left-fin":[131,266],"right-fin":[269,266],window:[200,181]},
   robot:{head:[241,90],body:[243,236],"left-arm":[94,194],"right-arm":[306,194],feet:[200,290]},
   ship:{mast:[190,190],sail:[278,163],flag:[224,33],hull:[125,264],porthole:[249,270]},
   tree:{trunk:[199,251],crown:[191,91],branch:[134,159],fruit:[251,128],grass:[197,303]},
   flower:{stem:[200,195],pot:[199,279],petals:[232,67],center:[200,95],leaf:[140,198]},
   balloon:{rig:[174,225],envelope:[249,76],stripe:[199,96],nozzle:[200,194],basket:[200,284]},
-  castle:{wall:[258,220],gate:[220,263]},
+  castle:{wall:[205,204],"left-tower":[129,161],"right-tower":[268,177],gate:[200,274],flag:[300,54]},
   mushroom:{stem:[201,226],cap:[252,125],spots:[163,108],grass:[191,310],leaf:[283,266]},
   car:{body:[141,232],roof:[155,170],glass:[214,170],wheels:[200,287],headlight:[313,236]},
   butterfly:{"left-wing":[92,119],"right-wing":[307,116],body:[200,210],antennae:[200,66],patterns:[133,164]},
@@ -351,18 +372,20 @@ export function tangramSvg(task,placed=null,{small=false}={}){
   umbrella:{canopy:[126,130],shaft:[200,217],handle:[219,300],tip:[200,63],raindrops:[300,216]},
   snowman:{snow:[197,264],hat:[200,65],scarf:[145,171],face:[200,118],arms:[292,206]},
   cat:{body:[191,244],head:[134,106],tail:[307,221],paws:[187,295],face:[175,137]},
-  snail:{body:[249,264],shell:[115,177],spiral:[177,166],feelers:[288,115],leaf:[293,285]},
+  snail:{body:[120,280],head:[293,214],shell:[123,159],spiral:[184,195],feelers:[249,69]},
   submarine:{hull:[126,225],tower:[169,147],periscope:[209,83],windows:[218,213],propeller:[313,212]}
  };
  if(!small)for(let i=0;i<task.parts.length;i++){
   const part=task.parts[i],position=anchors[task.figure]?.[part.id]??[part.x,part.y];
-  const radius=part.shape==="thin-rectangle"?11:part.shape==="ship-mast"?8:part.shape==="ship-porthole"?11:part.shape==="ship-flag"?12:14;
+  const radius=part.shape==="thin-rectangle"?11:part.shape==="ship-mast"?8:part.shape==="ship-porthole"?11:part.shape==="ship-flag"?12:part.shape==="castle-flag"?11:part.shape==="snail-eyestalks"?10:14;
   const fontSize=radius<12?12:16;
   shapes+='<g class="tangram-slot-number"><circle cx="'+position[0]+'" cy="'+position[1]+'" r="'+radius+'" fill="#fff" stroke="#665097" stroke-width="1.7" opacity=".96"/>'+
    '<text x="'+position[0]+'" y="'+(position[1]+1)+'" font-size="'+fontSize+'" font-weight="900" text-anchor="middle" dominant-baseline="middle" fill="#473278">'+(i+1)+'</text></g>';
  }
- return '<svg class="tangram-art" viewBox="35 -35 330 370" role="img" aria-label="Геометрическая фигура '+task.figureName+'">'+
-  '<rect x="35" y="-35" width="330" height="370" fill="'+(small?"#fff":"#fffef7")+'" rx="14"/>'+
+ // Более плотное кадрирование трёх переработанных сцен, без обрезки элементов.
+ const frame=task.figure==="rocket"?[80,-6,240,326]:task.figure==="castle"?[70,9,260,322]:task.figure==="snail"?[49,35,300,284]:[35,-35,330,370];
+ return '<svg class="tangram-art" viewBox="'+frame.join(" ")+'" role="img" aria-label="Геометрическая фигура '+task.figureName+'">'+
+  '<rect x="'+frame[0]+'" y="'+frame[1]+'" width="'+frame[2]+'" height="'+frame[3]+'" fill="'+(small?"#fff":"#fffef7")+'" rx="14"/>'+
   shapes+'</svg>';
 }
 export function tangramPieceSvg(part){
@@ -385,6 +408,9 @@ export function tangramPieceSvg(part){
   "snowman-body":.62,"snowman-hat":.87,"snowman-scarf":.70,"snowman-face":.78,"snowman-arms":.46,
   "cat-body":.62,"cat-head":.69,"cat-tail":.75,"cat-paws":.79,"cat-face":.80,
   "snail-body":.50,"snail-shell":.52,"snail-spiral":.88,"snail-feelers":.76,"snail-leaf":.72,
+  "snail-foot":.48,"snail-head":.74,"snail-shell-v2":.58,"snail-spiral-v2":.93,"snail-eyestalks":.91,
+  "rocket-body":.66,"rocket-nose":.91,"rocket-left-fin":.93,"rocket-right-fin":.93,"rocket-window":1.08,
+  "castle-wall":.64,"castle-left-tower":.67,"castle-right-tower":.65,"castle-gate":.96,"castle-flag":1.06,
   "submarine-hull":.48,"submarine-tower":.79,"submarine-scope":1.04,"submarine-windows":.53,"submarine-propeller":.80
  };
  const size=Math.min(part.scale,trayLimits[part.shape]??1.15);

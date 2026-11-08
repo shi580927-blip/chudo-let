@@ -343,3 +343,36 @@ button.tangram-slot{cursor:pointer}.tangram-slot b{font-size:19px}
 
 /* Аудит разнообразия: не скрывать ограниченный словарь под зелёной отметкой. */
 .valid-badge.has-repeats{background:#fff1d2;border:1px solid #e7c979;color:#80612a;white-space:normal;max-width:300px;text-align:center;line-height:1.25}
+
+
+/* Фигуры-конструкторы: плотная игровая композиция 20 силуэтов, без лишних полей. */
+.tangram-layout{
+  grid-template-columns:minmax(0,1.4fr) minmax(166px,.6fr);
+  max-width:860px;gap:9px;margin:7px auto 10px
+}
+.tangram-stage{padding:3px;min-width:0}
+.tangram-art{display:block;width:100%;height:auto;max-height:none}
+.tangram-slots{gap:5px}
+.tangram-slot{min-height:49px;padding:5px 8px;gap:6px}
+.tangram-slot b{font-size:17px;flex-shrink:0}
+.tangram-slot span{font-size:12px}
+.tangram-tray{gap:6px;margin:7px auto 8px}
+.tangram-tray-item{width:clamp(69px,11vw,91px);height:clamp(69px,11vw,91px);padding:3px}
+@media(max-width:760px){
+ .tangram-layout{grid-template-columns:1fr;gap:7px}
+ .tangram-stage{width:100%;max-width:440px}
+ .tangram-slots{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .tangram-tray{gap:5px}
+ .tangram-tray-item{width:clamp(59px,17vw,86px);height:clamp(59px,17vw,86px)}
+}
+@media(max-width:420px){
+ .tangram-slots{grid-template-columns:1fr}
+ .tangram-slot{min-height:43px}
+ .tangram-tray-item{width:clamp(52px,18vw,74px);height:clamp(52px,18vw,74px)}
+}
+@media print{
+ .print-task .tangram-layout{display:block;max-width:100%}
+ .print-task .tangram-stage{width:108mm;max-width:100%;margin:0 auto 2mm;padding:1mm}
+ .print-task .tangram-tray{gap:2mm;margin:2mm auto 3mm}
+ .print-task .tangram-tray-item{width:20mm;height:20mm;padding:.6mm}
+}
