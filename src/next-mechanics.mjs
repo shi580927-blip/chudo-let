@@ -41,25 +41,31 @@ const COMPOSITIONS=Object.freeze({
   ["porthole","circle",200,270,.65,"#d9f28d",0]
  ],
  tree:[
-  ["trunk","rectangle",200,241,1.05,"#d6b48a",0],
-  ["crown","circle",200,110,1.4,"#a9dfb4",0],
-  ["branch","triangle",136,173,.67,"#b6d79b",-90],
-  ["berry","diamond",250,110,.48,"#f3a2a3",0],
-  ["grass","trapezoid",200,307,.8,"#a4dca9",0]
+  // Узнаваемое дерево: разветвлённый ствол, пышная неровная крона,
+  // боковая веточка с листвой, яблоко на кроне и основание с травой.
+  ["trunk","tree-trunk",200,239,1,"#cba378",0],
+  ["crown","tree-crown",200,94,1,"#a3dcae",0],
+  ["branch","tree-bough",137,163,1,"#8fc994",0],
+  ["fruit","tree-apple",251,123,1,"#f3a3a5",0],
+  ["grass","tree-meadow",200,302,1,"#9edc9d",0]
  ],
  flower:[
-  ["pot","trapezoid",200,270,1.1,"#e5b29e",0],
-  ["stem","thin-rectangle",200,190,1.05,"#9dcfa7",0],
-  ["blossom","circle",200,98,1.08,"#ffe39d",0],
-  ["leaf","diamond",138,198,.72,"#a6daa9",0],
-  ["petal","triangle",261,125,.65,"#d4b4ec",0]
+  // Цветок именно в горшке: лепестки окружают серединку,
+  // стебель выходит из горшка, лист растёт сбоку.
+  ["stem","flower-stem",200,188,1,"#9ed2a6",0],
+  ["pot","flower-pot",200,274,1,"#eac2a3",0],
+  ["petals","flower-petals",200,94,1,"#d3b7f7",0],
+  ["center","flower-center",200,94,1,"#ffe28d",0],
+  ["leaf","flower-leaf",148,195,1,"#94d4a5",0]
  ],
  balloon:[
-  ["balloon","circle",200,104,1.45,"#edb6e5",0],
-  ["basket","square",200,276,.72,"#c7a889",0],
-  ["rope","thin-rectangle",200,219,.85,"#dbc2b7",0],
-  ["bow","diamond",279,165,.48,"#f8d37d",0],
-  ["ribbon","pennant",118,161,.60,"#c1dff5",90]
+  // Воздушный шар-аэростат, а не круг на палочке:
+  // две верёвки, большая оболочка, цветная полоса, горловина и корзина.
+  ["rig","balloon-rig",200,223,1,"#b5a3dc",0],
+  ["envelope","balloon-envelope",200,105,1,"#f0b4d7",0],
+  ["stripe","balloon-stripe",200,105,1,"#b9d7f5",0],
+  ["nozzle","balloon-nozzle",200,194,1,"#f9c98a",0],
+  ["basket","balloon-basket",200,279,1,"#d6b18b",0]
  ],
  castle:[
   ["wall","square",200,224,1.45,"#d5c0f4",0],
@@ -108,7 +114,25 @@ const SHAPES={
  triangle:'<polygon points="0,-50 49,41 -49,41"/>',
  circle:'<circle r="41"/>',
  diamond:'<polygon points="0,-53 44,0 0,53 -44,0"/>',
- trapezoid:'<polygon points="-32,-34 32,-34 53,34 -53,34"/>'
+ trapezoid:'<polygon points="-32,-34 32,-34 53,34 -53,34"/>',
+ // Дерево: крона не круг, а естественная волнистая форма.
+ 'tree-trunk':'<path d="M-23 -74 Q-23 -85 -11 -86 L-2 -54 L10 -74 Q16 -81 22 -73 L16 -29 L24 58 L43 69 L40 75 L7 70 L-15 75 L-45 70 L-23 58 L-18 -31Z"/>',
+ 'tree-crown':'<path d="M-84 25 C-105 12 -100 -27 -79 -38 C-80 -65 -47 -79 -22 -67 C0 -90 32 -81 46 -64 C76 -65 94 -43 84 -17 C110 2 94 39 73 48 C67 69 39 77 17 66 C-5 80 -37 68 -47 57 C-68 62 -89 50 -84 25Z"/>',
+ 'tree-bough':'<path d="M35 0 C9 -31 -25 -35 -43 -7 C-50 14 -24 36 4 25 C22 20 29 8 35 0Z"/>',
+ 'tree-apple':'<path d="M0 -21 Q-27 -39 -28 -10 C-39 12 -24 35 -3 30 C16 36 35 12 28 -11 Q25 -34 5 -21 L3 -32 L-2 -32Z"/>',
+ 'tree-meadow':'<path d="M-96 20 Q-81 -4 -61 7 Q-38 -17 -19 2 Q4 -24 24 1 Q49 -17 66 6 Q84 -2 96 20 Q65 15 42 25 H-42 Q-72 25 -96 20Z"/>',
+ // Цветок: пять лепестковых лопастей в одном контуре, лист, стебель и горшок.
+ 'flower-stem':'<path d="M-9 -68 Q1 -73 10 -62 L7 59 Q0 70 -10 60 Z"/>',
+ 'flower-pot':'<path d="M-60 -35 H60 V-23 H48 L37 36 Q0 43 -37 36 L-48 -23 H-60Z"/>',
+ 'flower-petals':'<path d="M-22 -33 C-47 -70 -82 -39 -53 -7 C-83 3 -68 44 -33 35 C-27 72 18 72 29 35 C65 57 85 16 53 -9 C70 -43 32 -66 18 -36 C8 -73 -26 -70 -22 -33Z"/>',
+ 'flower-center':'<path d="M0 -26 C-17 -28 -28 -12 -26 5 C-25 23 -9 29 1 25 C16 28 27 13 26 -3 C25 -20 10 -29 0 -26Z"/>',
+ 'flower-leaf':'<path d="M49 -6 C29 -44 -29 -43 -49 17 C-18 46 33 22 49 -6Z"/>',
+ // Аэростат: характерная каплевидная оболочка и ДВЕ подвесные верёвки.
+ 'balloon-rig':'<path d="M-39 -43 L-19 50 H-12 L-29 -43Z M31 -43 L12 50 H19 L39 -43Z"/>',
+ 'balloon-envelope':'<path d="M0 -91 C-53 -91 -86 -49 -84 -1 C-82 46 -41 69 -24 80 H24 C41 69 82 46 84 -1 C86 -49 53 -91 0 -91Z"/>',
+ 'balloon-stripe':'<path d="M-12 -83 C-34 -54 -35 23 -19 71 H19 C35 23 34 -54 12 -83Z"/>',
+ 'balloon-nozzle':'<path d="M-24 -15 H24 L17 13 Q0 25 -17 13Z"/>',
+ 'balloon-basket':'<path d="M-47 -31 H47 L40 30 Q0 42 -40 30Z"/>',
 };
 function shapeItem(part,fill,stroke="#7256a0",strokeWidth=3){
  return '<g transform="translate('+part.x+' '+part.y+') rotate('+part.rotate+') scale('+part.scale+')" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+strokeWidth+'" stroke-linejoin="round">'+SHAPES[part.shape]+'</g>';
@@ -149,9 +173,9 @@ export function tangramSvg(task,placed=null,{small=false}={}){
   rocket:{body:[200,241],tip:[200,60],window:[200,170]},
   robot:{head:[241,90],body:[243,236],"left-arm":[94,194],"right-arm":[306,194],feet:[200,290]},
   ship:{hull:[149,271],porthole:[200,270]},
-  tree:{crown:[199,102]},
-  flower:{blossom:[200,97]},
-  balloon:{balloon:[200,104]},
+  tree:{trunk:[199,251],crown:[191,91],branch:[134,159],fruit:[251,128],grass:[197,303]},
+  flower:{stem:[200,195],pot:[199,279],petals:[232,67],center:[200,95],leaf:[140,198]},
+  balloon:{rig:[174,225],envelope:[249,76],stripe:[199,96],nozzle:[200,194],basket:[200,284]},
   castle:{wall:[258,220],gate:[220,263]}
  };
  if(!small)for(let i=0;i<task.parts.length;i++){

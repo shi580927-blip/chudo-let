@@ -413,3 +413,26 @@ test("Робот: голова, корпус, две руки и ноги, пя�
   assert.equal(checkAnswer(task,task.answer),true);
  }
 });
+
+test("Дерево, цветок и аэростат: смысловые 5 частей, уникальные контуры, наглядные силуэты",()=>{
+ const expectations={
+  tree:["trunk","crown","branch","fruit","grass"],
+  flower:["stem","pot","petals","center","leaf"],
+  balloon:["rig","envelope","stripe","nozzle","basket"]
+ };
+ for(const figure of Object.keys(expectations))for(let seed=0;seed<140;seed++){
+  const t=makeTask("tangram","5-6","clouds",seed,null,figure);
+  assert.equal(t.figure,figure);
+  assert.deepEqual(t.parts.map(p=>p.id),expectations[figure]);
+  assert.equal(new Set(t.parts.map(p=>p.shape)).size,5);
+  assert.ok(t.parts.every(p=>p.shape.startsWith(figure==="balloon"?"balloon-":figure+"-")));
+  assert.equal(validateTask(t),true);
+  assert.equal(checkAnswer(t,t.answer),true);
+  const empty=tangramSvg(t,Array(5).fill(null));
+  const full=tangramSvg(t,t.answer);
+  assert.equal((empty.match(/class="tangram-slot-number"/g)||[]).length,5);
+  assert.equal((full.match(/class="tangram-slot-number"/g)||[]).length,5);
+  for(const piece of t.parts)assert.ok(full.includes(piece.color));
+  assert.equal(checkAnswer(t,t.tray),false);
+ }
+});
