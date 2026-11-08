@@ -1,4 +1,5 @@
 import {WORD_BANK,allowedWords} from "./words.mjs";
+import {STORY_BANK,PAIR_BANK} from "./narrative-banks.mjs";
 import {makeTangram,validateTangram,checkTangram,FIGURE_IDS,makeMathPath,validateMathPath,checkMathPath,makeShop,validateShop,checkShop} from "./next-mechanics.mjs";
 import {makePicturePuzzle,validatePicturePuzzle,checkPicturePuzzle,makeSymmetry,validateSymmetry,checkSymmetry,makeBackpack,validateBackpack,checkBackpack} from "./spatial.mjs";
 // ЧУДОЛЁТ — независимый детерминированный генератор заданий.
@@ -22,12 +23,12 @@ export const CATALOG = [
 ].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","map","count","compare","number","word","syllables","story","crossword","cipher","puzzle","symmetry","backpack","tangram","mathpath","shop"].includes(id)}));
 
 export const THEMES = {
- clouds:{name:"Облачная почта",icon:"☁️",a:["✉️","📦","🪁","🧭","🔔","🗝️"],b:["🌈","⭐","☁️","🌙","☀️","⚡"],labels:["Почтовые находки","Небесные чудеса"]},
- forest:{name:"Волшебный лес",icon:"🌳",a:["🍄","🌰","🍓","🍎","🍐","🥕"],b:["🦊","🐿️","🐻","🦉","🦋","🐇"],labels:["Лесные запасы","Лесные жители"]},
- ocean:{name:"Подводное царство",icon:"🐚",a:["🐟","🐠","🐡","🦀","🐙","🦐"],b:["🐚","🪸","💎","⚓","🧭","🏝️"],labels:["Морские жители","Морские находки"]},
- space:{name:"Космическая экспедиция",icon:"🚀",a:["🚀","🛸","🛰️","🔭","🪐","🌌"],b:["⭐","🌟","☀️","🌙","🌎","☄️"],labels:["Космическая техника","Небесные тела"]},
- pirate:{name:"Пиратское приключение",icon:"🏴‍☠️",a:["🧭","🗝️","⚓","🪙","🗺️","💰"],b:["🦜","🐒","🐢","🦀","🐙","🦈"],labels:["Пиратские вещи","Животные"]},
- dino:{name:"Долина динозавров",icon:"🦕",a:["🦕","🦖","🥚","🦎","🐢","🐊"],b:["🌴","🌵","🌋","🪨","🌿","🍃"],labels:["Доисторические обитатели","Природа долины"]}
+ clouds:{name:"Облачная почта",icon:"☁️",a:["✉️","📦","🪁","🧭","🔔","🗝️","📮","🏷️","🖋️","👜","🎒","🗞️"],b:["🌈","⭐","☁️","🌙","☀️","⚡","🌧️","🌤️","❄️","🌪️","🌨️","🌌"],labels:["Почтовые находки","Небесные чудеса"]},
+ forest:{name:"Волшебный лес",icon:"🌳",a:["🍄","🌰","🍓","🍎","🍐","🥕","🌿","🌼","🍯","🥜","🍂","🪵"],b:["🦊","🐿️","🐻","🦉","🦋","🐇","🦔","🦡","🐌","🐝","🦌","🐸"],labels:["Лесные запасы","Лесные жители"]},
+ ocean:{name:"Подводное царство",icon:"🐚",a:["🐟","🐠","🐡","🦀","🐙","🦐","🦈","🐬","🐋","🪼","🦭","🦑"],b:["🐚","🪸","💎","⚓","🧭","🏝️","⛵","🛟","🪙","🗺️","🪨","🛶"],labels:["Морские жители","Морские находки"]},
+ space:{name:"Космическая экспедиция",icon:"🚀",a:["🚀","🛸","🛰️","🔭","🤖","📡","📻","🔦","🖥️","🔋","📷","🧪"],b:["⭐","🌟","☀️","🌙","🌎","☄️","🪐","🌌","🌠","🌑","🌘","🌕"],labels:["Космическая техника","Небесные объекты"]},
+ pirate:{name:"Пиратское приключение",icon:"🏴‍☠️",a:["🧭","🗝️","⚓","🪙","🗺️","💰","🏴‍☠️","⛵","🪝","🎒","🧰","🔭"],b:["🦜","🐒","🐢","🦀","🐙","🦈","🐟","🐬","🦎","🦭","🐠","🦑"],labels:["Пиратские вещи","Животные"]},
+ dino:{name:"Долина динозавров",icon:"🦕",a:["🦕","🦖","🥚","🦎","🐢","🐊","🦤","🐦","🐸","🦋","🪲","🐍"],b:["🌴","🌵","🌋","🪨","🌿","🍃","🌳","🌱","🌼","🪵","🏞️","🌧️"],labels:["Доисторические обитатели","Природа долины"]},
 };
 // Предметы рюкзака — особый классификационный набор, не меняющий остальные задания.
 const BACKPACK_SPACE={
@@ -437,8 +438,7 @@ function taskFor(kind,age,theme,r,selectedWord=null,selectedFigure=null){
   return {...q,prompt:"Разложи предметы по двум корзинам.",labels:t.labels,items:shuffle([...a,...b],r),answer:null};
  }
  if(kind==="pair"){
-  const pairs=[["🐝","🌼"],["🐇","🥕"],["🔑","🔒"],["✉️","📮"],["🐟","🌊"],["☀️","🕶️"],["🪥","🦷"],["🌧️","☂️"]];
-  const selected=shuffle(pairs,r).slice(0,4),target=pick(selected,r);
+  const selected=shuffle(PAIR_BANK,r).slice(0,4),target=pick(selected,r);
   return {...q,prompt:"Что подходит к предмету "+target[0]+"?",target:target[0],options:shuffle(selected.map(x=>x[1]),r),answer:target[1]};
  }
  if(kind==="maze")return {...q,prompt:"Проведи героя от старта 🐾 до финиша ⭐.",...maze(short?4:age>=10?7:6,r,age>=7),answer:null};
@@ -447,8 +447,8 @@ function taskFor(kind,age,theme,r,selectedWord=null,selectedFigure=null){
   return {...q,prompt:"Чего больше? Выбери знак.",left,right,icon:pick(combined,r),options:[">","=","<"],answer:left>right?">":left<right?"<":"="};
  }
  if(kind==="story"){
-  const cards=shuffle(STORY_STEPS.map((s,i)=>({...s,order:i})),r);
-  return {...q,prompt:"Нажми на картинки в правильном порядке.",cards,answer:[0,1,2,3]};
+  const story=pick(STORY_BANK,r),cards=shuffle(story.steps.map((step,i)=>({...step,order:i})),r);
+  return {...q,prompt:"Нажми на картинки в правильном порядке.",storyId:story.id,cards,answer:[0,1,2,3]};
  }
  throw new Error("Механика ещё не реализована: "+kind);
 }
@@ -537,7 +537,12 @@ export function validateTask(t){
     countMazeRoutes(t)===t.routeCount&&!!solveMaze(t);
  }
  if(t.kind==="compare")return (t.left>t.right?">":t.left<t.right?"<":"=")===t.answer;
- if(t.kind==="story")return t.cards.length===4&&t.cards.map(c=>c.order).sort().join(",")==="0,1,2,3";
+ if(t.kind==="story"){
+  const known=STORY_BANK.find(x=>x.id===t.storyId);
+  return !!known&&t.cards.length===4&&t.cards.map(c=>c.order).sort().join(",")==="0,1,2,3"&&
+   t.cards.every(c=>known.steps[c.order]?.text===c.text&&known.steps[c.order]?.icon===c.icon)&&
+   Array.isArray(t.answer)&&t.answer.join(",")==="0,1,2,3";
+ }
  return false;
 }
 export function checkAnswer(t,value){
@@ -584,7 +589,7 @@ export function solutionText(t){
  if(t.kind==="differences")return t.answer.map(i=>"строка "+(Math.floor(i/t.cols)+1)+", столбец "+(i%t.cols+1)).join("; ");
  if(t.kind==="maze")return "Возможных маршрутов: "+t.routeCount+". Пример: "+solveMaze(t).map(n=>"("+((n%t.size)+1)+","+Math.floor(n/t.size+1)+")").join(" → ");
  if(t.kind==="sort")return t.items.map(i=>i.icon+" — "+t.labels[i.group]).join("; ");
- if(t.kind==="story")return STORY_STEPS.map(e=>e.text).join(" → ");
+ if(t.kind==="story")return t.cards.slice().sort((a,b)=>a.order-b.order).map(e=>e.text).join(" → ");
  if(t.kind==="odd")return t.cells[t.answer]+" (позиция "+(t.answer+1)+")";
  if(t.kind==="shadow"||t.kind==="pair"||t.kind==="sequence")return t.answer;
  return String(t.answer);
@@ -621,9 +626,9 @@ export function contentKey(t){
 function finiteVariety(kind,theme,age){
  const t=THEMES[theme]??THEMES.clouds;
  if(kind==="shadow"||kind==="odd")return new Set([...t.a,...t.b]).size;
- if(kind==="pair")return 8;
+ if(kind==="pair")return PAIR_BANK.length;
  if(kind==="cipher")return (CIPHER_WORDS[theme]??CIPHER_WORDS.clouds).filter(x=>x.length<=(age<=5?6:age<=7?7:10)).length;
- if(kind==="story")return 1;
+ if(kind==="story")return STORY_BANK.length;
  return null;
 }
 export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,focus="mixed"}={}){
@@ -664,7 +669,7 @@ export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,f
   let task=makeTask(kind,age,theme,taskSeed,selectedWord,selectedFigure);
   // Слова и фигуры уже расходуются отдельными циклами; остальным типам
   // подбираем новые СОДЕРЖАТЕЛЬНЫЕ задания, а не только другой seed.
-  if(kind!=="word"&&kind!=="syllables"&&kind!=="tangram"&&kind!=="story"){
+  if(kind!=="word"&&kind!=="syllables"&&kind!=="tangram"){
    const cap=finiteVariety(kind,theme,resolveAge(age));
    let used=contentSeen.get(kind);
    if(!used){used=new Set();contentSeen.set(kind,used);}
