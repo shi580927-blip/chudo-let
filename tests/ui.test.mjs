@@ -197,3 +197,47 @@ test("Волшебный рюкзак: недостаточно предмето
  click({action:"check"});
  assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
 });
+
+test("Фигуры-конструкторы: разместить детали, проверить, распечатать пустую схему",()=>{
+ const t=setup("type:tangram","5-6");
+ assert.match(el("activity").innerHTML,/tangram-tray/);
+ for(let i=0;i<t.parts.length;i++){
+  click({action:"tangramSlot",cell:String(i)});
+  click({action:"tangramPiece",piece:t.answer[i]});
+ }
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+ globalThis.requestAnimationFrame=cb=>cb();globalThis.window={print(){}};
+ el("printBtn").handlers.click();
+ const page=el("printRoot").innerHTML.split('<section class="answer-heading">')[0];
+ assert.match(page,/tangram-art/);
+ assert.match(page,/tangram-tray/);
+ assert.doesNotMatch(page,/<span class="tangram-mini">/);
+});
+test("Математическая дорожка: до конца не оценивается ошибкой",()=>{
+ const t=setup("type:mathpath","7-9");
+ assert.match(el("activity").innerHTML,/mathpath-steps/);
+ click({action:"pathChoose",step:"0",choice:String(t.answer[0])});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Выбери число на каждом шаге/);
+ assert.doesNotMatch(el("activity").innerHTML,/Не совсем/);
+ for(let i=1;i<t.steps.length;i++)click({action:"pathChoose",step:String(i),choice:String(t.answer[i])});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});
+test("Магазин: единственная покупка по сумме и чистая распечатка",()=>{
+ const t=setup("type:shop","10-12");
+ assert.match(el("activity").innerHTML,/shop-grid/);
+ click({action:"shopToggle",value:String(t.answer[0])});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Сначала выбери ровно/);
+ assert.doesNotMatch(el("activity").innerHTML,/Не совсем/);
+ for(const i of t.answer.slice(1))click({action:"shopToggle",value:String(i)});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+ globalThis.requestAnimationFrame=cb=>cb();globalThis.window={print(){}};
+ el("printBtn").handlers.click();
+ const page=el("printRoot").innerHTML.split('<section class="answer-heading">')[0];
+ assert.match(page,/shop-checkbox">□/);
+ assert.doesNotMatch(page,/shop-item selected/);
+});

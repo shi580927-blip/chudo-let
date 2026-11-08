@@ -2,8 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer,countSudokuSolutions,validSudokuSolution,traceMap,validateCrossword} from "../src/engine.mjs";
 import {WORD_BANK} from "../src/words.mjs";
+import {shopSolutions,tangramSvg} from "../src/next-mechanics.mjs";
 import {backpackSolutions,mirrorRight} from "../src/spatial.mjs";
-test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,23);});
+test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,26);});
 test("Генераторы всех тем и возрастов гарантированно корректны",()=>{
  for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(const kind of READY_IDS)for(let seed=0;seed<30;seed++){
   const t=makeTask(kind,age,theme,seed);
@@ -16,7 +17,7 @@ test("Одинаковые параметры порождают одинако�
  const a=generateBundle({seed:42,count:20}),b=generateBundle({seed:42,count:20});
  assert.deepEqual(a,b);
 });
-test("В неготовую механику попасть нельзя",()=>assert.throws(()=>makeTask("tangram"),/ещё не готов/));
+test("В неготовую механику попасть нельзя",()=>assert.throws(()=>makeTask("detective"),/ещё не готов/));
 test("Ошибочные ответы отбрасываются",()=>{
  const m=makeTask("maze","7-9","clouds",10);assert.equal(checkAnswer(m,[0,m.size*m.size-1]),false);
  const s=makeTask("sort","5-6","forest",15);assert.equal(checkAnswer(s,s.items.map(x=>1-x.group)),false);
@@ -294,5 +295,61 @@ test("Механики доступны лишь в подходящем воз�
   const bundle=generateBundle({age,theme:"forest",focus:"type:"+kind,count:12,seed:210});
   assert.equal(bundle.tasks.length,12);
   assert.ok(bundle.tasks.every(t=>t.kind===kind&&validateTask(t)));
+ }
+});
+
+test("Фигуры-конструкторы: все пять деталей, правильное размещение и отсутствие спойлеров",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<110;seed++){
+  const t=makeTask("tangram",age,theme,seed);
+  assert.equal(validateTask(t),true,theme+" "+age+" "+seed);
+  assert.equal(t.parts.length,5);assert.equal(new Set(t.parts.map(x=>x.id)).size,5);
+  assert.notDeepEqual(t.tray,t.answer);
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,t.tray),false);
+  assert.equal(checkAnswer(t,t.answer.slice(1)),false);
+  const blank=tangramSvg(t,Array(5).fill(null));
+  assert.ok(!blank.includes('stroke="#604a85"'));
+  const duplicate=t.answer.slice();duplicate[1]=duplicate[0];
+  assert.equal(checkAnswer(t,duplicate),false);
+  assert.equal(validateTask({...t,tray:t.tray.slice(1)}),false);
+ }
+});
+test("Математическая дорожка: одна точная арифметическая последовательность",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<110;seed++){
+  const t=makeTask("mathpath",age,theme,seed);
+  assert.equal(validateTask(t),true,theme+" "+age+" "+seed);
+  let value=t.start;
+  for(const step of t.steps){
+   value=step.op==="+"?value+step.amount:step.op==="-"?value-step.amount:value*step.amount;
+   assert.equal(value,step.result);
+   assert.equal(step.options.filter(x=>x===step.result).length,1);
+  }
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,t.answer.slice(0,-1)),false);
+  const wrong=t.answer.slice();wrong[0]=(wrong[0]+1)%3;
+  assert.equal(checkAnswer(t,wrong),false);
+  const invalid=t.steps.map(x=>({...x}));invalid[0].result+=2;
+  assert.equal(validateTask({...t,steps:invalid}),false);
+ }
+});
+test("Магазин приключений: бюджет имеет ровно один набор покупок",()=>{
+ for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<110;seed++){
+  const t=makeTask("shop",age,theme,seed);
+  assert.equal(validateTask(t),true,theme+" "+age+" "+seed);
+  const solutions=shopSolutions(t);
+  assert.equal(solutions.length,1);
+  assert.deepEqual(solutions[0],t.answer);
+  assert.equal(checkAnswer(t,t.answer),true);
+  assert.equal(checkAnswer(t,t.answer.slice(1)),false);
+  assert.equal(checkAnswer(t,[...t.answer,t.answer[0]]),false);
+  assert.equal(validateTask({...t,budget:150}),false);
+ }
+});
+test("Отдельные новые задания фильтруются по возрасту",()=>{
+ for(const kind of ["tangram","mathpath","shop"]){
+  assert.throws(()=>generateBundle({age:"3-4",focus:"type:"+kind}),/возрасту/);
+  const b=generateBundle({age:"5-6",theme:"clouds",count:12,focus:"type:"+kind,seed:733});
+  assert.equal(b.tasks.length,12);
+  assert.ok(b.tasks.every(t=>t.kind===kind&&validateTask(t)));
  }
 });
