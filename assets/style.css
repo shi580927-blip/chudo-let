@@ -337,3 +337,6 @@ button.tangram-slot{cursor:pointer}.tangram-slot b{font-size:19px}
  .print-task .shop-emoji{font-size:27pt}.print-task .shop-price{font-size:12pt}
  .print-task .shop-budget{padding:2mm;background:#fff}
 }
+
+/* Подпись Млечного Пути в космическом рюкзаке */
+.pack-item-name{font-size:12px;font-weight:800;color:#5e427f;line-height:1.1;text-align:center}
