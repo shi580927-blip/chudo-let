@@ -661,4 +661,36 @@ $("downloadBtn").addEventListener("click",()=>{
  a.href=url;a.download="chudolet-"+state.bundle.theme+"-"+state.bundle.seed+".json";a.click();
  setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
-renderCatalog();updateBundle();
+function populateAllMechanics(){
+ const sel=$("focus");
+ if(!sel?.options)return;
+ const available=new Set(Array.from(sel.options).map(o=>o.value));
+ for(const item of CATALOG){
+  const id="type:"+item.id;
+  if(!available.has(id)){sel.add(new Option('Только «'+item.name+'» (от '+item.minAge+' лет)',id));}
+ }
+}
+function openQaDeepLink(){
+ // Специальная ссылка с редакторской галереи: тот же пакет из 20 и та же задача.
+ if(typeof globalThis.location==="undefined"||!globalThis.location.search)return false;
+ const params=new URLSearchParams(globalThis.location.search);
+ if(params.get("qa")!=="1")return false;
+ const kind=params.get("kind"),theme=params.get("theme"),age=params.get("age");
+ if(!CATALOG.some(c=>c.id===kind&&c.ready)||!THEMES[theme]||!["3-4","5-6","7-9","10-12"].includes(age))return false;
+ const selected=CATALOG.find(c=>c.id===kind);
+ if(Number(age.split("-")[0])<selected.minAge)return false;
+ const seed=Number(params.get("seed")),index=Number(params.get("task"));
+ if(!Number.isSafeInteger(seed)||seed<1||seed>999999999||!Number.isInteger(index)||index<0||index>=20)return false;
+ $("theme").value=theme;$("age").value=age;
+ $("focus").value="type:"+kind;$("seed").value=String(seed);
+ $("count").value="20";$("countOutput").textContent="20";
+ try{state.bundle=generateBundle({theme,age,focus:"type:"+kind,count:20,seed});}
+ catch{return false;}
+ state.index=index;state.done.clear();reset();
+ document.body.classList.add("qa-embed");
+ return true;
+}
+populateAllMechanics();
+renderCatalog();
+openQaDeepLink();
+updateBundle();
