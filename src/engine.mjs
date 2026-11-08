@@ -1,4 +1,5 @@
 import {WORD_BANK,allowedWords} from "./words.mjs";
+import {makeTangram,validateTangram,checkTangram,makeMathPath,validateMathPath,checkMathPath,makeShop,validateShop,checkShop} from "./next-mechanics.mjs";
 import {makePicturePuzzle,validatePicturePuzzle,checkPicturePuzzle,makeSymmetry,validateSymmetry,checkSymmetry,makeBackpack,validateBackpack,checkBackpack} from "./spatial.mjs";
 // ЧУДОЛЁТ — независимый детерминированный генератор заданий.
 // Никаких запросов к серверу; идентификаторы и решения сохраняются в JSON.
@@ -18,7 +19,7 @@ export const CATALOG = [
  ["phrase","Закончи фразу","Речь",5],["cipher","Секретный шифр","Приключения",7],
  ["backpack","Волшебный рюкзак","Приключения",5],["detective","Маленький детектив","Приключения",6],
  ["branching","Приключение с выбором","Приключения",5],["team","Командная миссия","Приключения",6]
-].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","map","count","compare","number","word","syllables","story","crossword","cipher","puzzle","symmetry","backpack"].includes(id)}));
+].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","map","count","compare","number","word","syllables","story","crossword","cipher","puzzle","symmetry","backpack","tangram","mathpath","shop"].includes(id)}));
 
 export const THEMES = {
  clouds:{name:"Облачная почта",icon:"☁️",a:["✉️","📦","🪁","🧭","🔔","🗝️"],b:["🌈","⭐","☁️","🌙","☀️","⚡"],labels:["Почтовые находки","Небесные чудеса"]},
@@ -306,6 +307,9 @@ function wordChoices(kind,theme,age){
 function taskFor(kind,age,theme,r,selectedWord=null){
  const t=THEMES[theme]||THEMES.clouds,combined=[...t.a,...t.b],short=age<=3;
  let q={kind,title:CATALOG.find(e=>e.id===kind)?.name??kind,theme,age};
+ if(kind==="tangram")return {...q,prompt:"Рассмотри контуры и собери фигуру из геометрических деталей.",...makeTangram(age,r)};
+ if(kind==="mathpath")return {...q,prompt:"Пройди числовую дорожку. На каждом шаге выбери правильный результат.",...makeMathPath(age,r)};
+ if(kind==="shop")return {...q,prompt:"Купи указанное количество предметов, потратив ровно весь бюджет.",...makeShop(t,age,r)};
  if(kind==="puzzle"){
   return {...q,prompt:"Восстанови картинку из перемешанных фрагментов. Смотри на маленький образец.",...makePicturePuzzle(t,age,r)};
  }
@@ -447,6 +451,9 @@ export function makeTask(kind,age="5-6",theme="clouds",seed=1,selectedWord=null)
 }
 export function validateTask(t){
  if(!t||!READY_IDS.includes(t.kind))return false;
+ if(t.kind==="tangram")return validateTangram(t);
+ if(t.kind==="mathpath")return validateMathPath(t);
+ if(t.kind==="shop")return validateShop(t,THEMES[t.theme]??THEMES.clouds);
  if(t.kind==="puzzle")return validatePicturePuzzle(t,THEMES[t.theme]??THEMES.clouds);
  if(t.kind==="symmetry")return validateSymmetry(t,THEMES[t.theme]??THEMES.clouds);
  if(t.kind==="backpack")return validateBackpack(t,THEMES[t.theme]??THEMES.clouds);
@@ -527,6 +534,9 @@ export function validateTask(t){
  return false;
 }
 export function checkAnswer(t,value){
+ if(t.kind==="tangram")return checkTangram(t,value);
+ if(t.kind==="mathpath")return checkMathPath(t,value);
+ if(t.kind==="shop")return checkShop(t,value);
  if(t.kind==="puzzle")return checkPicturePuzzle(t,value);
  if(t.kind==="symmetry")return checkSymmetry(t,value);
  if(t.kind==="backpack")return checkBackpack(t,value);
@@ -550,6 +560,9 @@ export function checkAnswer(t,value){
  return String(value)===String(t.answer);
 }
 export function solutionText(t){
+ if(t.kind==="tangram")return "Фигуры в порядке контуров: "+t.parts.map(p=>p.id).join(", ");
+ if(t.kind==="mathpath")return "Числовая цепочка: "+t.start+" → "+t.steps.map(s=>s.result).join(" → ");
+ if(t.kind==="shop")return "Купи: "+t.answer.map(i=>t.items[i].icon+" ("+t.items[i].price+" монет)").join(", ")+"; итого "+t.budget;
  if(t.kind==="puzzle")return "Порядок фрагментов: "+t.answer.map(x=>x+1).join(" → ");
  if(t.kind==="symmetry")return "Правильная половинка: "+(t.answer+1);
  if(t.kind==="backpack")return "Предметы: "+t.answer.map(i=>t.items[i].icon).join(" ")+"; суммарный вес: "+t.totalWeight+" жетонов";
@@ -572,7 +585,7 @@ export function solutionText(t){
 export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,focus="mixed"}={}){
  count=Math.max(1,Math.min(20,Number(count)||7));
  const eligible=(ids)=>ids.filter(id=>CATALOG.find(c=>c.id===id).minAge<=resolveAge(age));
- const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","map","compare","number","cipher","crossword","puzzle","symmetry"]:focus==="story"?["find","sort","sequence","maze","map","count","pair","story","cipher","word","syllables","crossword","puzzle","backpack"]:READY_IDS;
+ const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","map","compare","number","cipher","crossword","puzzle","symmetry","tangram","mathpath","shop"]:focus==="story"?["find","sort","sequence","maze","map","count","pair","story","cipher","word","syllables","crossword","puzzle","backpack","tangram","mathpath","shop"]:READY_IDS;
  const pool=eligible(candidates);
  if(pool.length===0)throw new Error("Эта механика пока не подходит выбранному возрасту.");
  const r=seeded(seed),tasks=[],cycles=new Map(),recentWords=[];
