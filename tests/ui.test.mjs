@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {generateBundle} from "../src/engine.mjs";
+import {generateBundle,READY_IDS,checkAnswer} from "../src/engine.mjs";
 
 const nodes=new Map();
 function el(id){
@@ -305,4 +305,106 @@ test("Новые игры имеют пригодные для А4 незапо�
  page=el("printRoot").innerHTML.split('<section class="answer-heading">')[0];
  assert.match(page,/Личная карточка|Сосчитай значки/);
  assert.match(page,/Секретный код/);
+});
+
+
+test("Два игровых намёка: последовательное раскрытие и скрытие без ответа",()=>{
+ const t=setup("type:word","7-9");
+ assert.doesNotMatch(el("activity").innerHTML,/chudo-hint__step/);
+ click({action:"hint"});
+ let markup=el("activity").innerHTML;
+ assert.match(markup,/СЕКРЕТНЫЙ СОВЕТ · 1 ИЗ 2/);
+ assert.equal((markup.match(/class="chudo-hint__step/g)||[]).length,1);
+ assert.match(markup,/aria-expanded="true"/);
+ assert.match(markup,/Ещё один намёк/);
+ click({action:"hint"});
+ markup=el("activity").innerHTML;
+ assert.match(markup,/СЕКРЕТНЫЙ СОВЕТ · 2 ИЗ 2/);
+ assert.equal((markup.match(/class="chudo-hint__step/g)||[]).length,2);
+ assert.match(markup,/Скрыть подсказки/);
+ assert.doesNotMatch(markup,/chudo-result__seal/);
+ click({action:"hint"});
+ markup=el("activity").innerHTML;
+ assert.doesNotMatch(markup,/id="gameHintCard"/);
+ assert.match(markup,/aria-expanded="false"/);
+ assert.doesNotMatch(markup,/Секретный совет/);
+});
+
+test("Все 30 видов показывают два отдельные невскрывающие ответ совета",()=>{
+ for(const kind of READY_IDS){
+  setup("type:"+kind,"10-12");
+  click({action:"hint"});
+  let markup=el("activity").innerHTML;
+  assert.match(markup,/СЕКРЕТНЫЙ СОВЕТ · 1 ИЗ 2/,kind);
+  click({action:"hint"});
+  markup=el("activity").innerHTML;
+  assert.match(markup,/СЕКРЕТНЫЙ СОВЕТ · 2 ИЗ 2/,kind);
+  assert.doesNotMatch(markup,/Ответ пока секрет\..*?Ответ: /,kind);
+  assert.doesNotMatch(markup,/chudo-result__seal/,kind);
+ }
+});
+
+test("Верный ответ: тематическая награда и счётчик, затем рабочая кнопка дальше",()=>{
+ const puzzle=setup("type:phrase","7-9",2);
+ click({action:"pick",value:puzzle.answer});
+ click({action:"check"});
+ let markup=el("activity").innerHTML;
+ assert.match(markup,/chudo-result--win/);
+ assert.match(markup,/МАЛЕНЬКАЯ ПОБЕДА/);
+ assert.match(markup,/Верно! Отличная работа/);
+ assert.match(markup,/1 из 2/);
+ assert.match(markup,/role="progressbar"/);
+ assert.match(markup,/aria-valuenow="1"/);
+ assert.match(markup,/data-action="noticeNext"/);
+ click({action:"noticeNext"});
+ markup=el("activity").innerHTML;
+ assert.doesNotMatch(markup,/chudo-result--win/);
+ assert.doesNotMatch(markup,/Верно! Отличная работа/);
+ assert.equal(el("taskCounter").textContent,"Задание 2 из 2");
+});
+
+test("Последняя победа завершает комплект без бесполезной кнопки вперёд",()=>{
+ const puzzle=setup("type:phrase","7-9",1);
+ click({action:"pick",value:puzzle.answer});
+ click({action:"check"});
+ const markup=el("activity").innerHTML;
+ assert.match(markup,/ВСЕ ИСПЫТАНИЯ ПРОЙДЕНЫ/);
+ assert.match(markup,/Ура! Всё приключение пройдено!/);
+ assert.match(markup,/aria-valuenow="1"/);
+ assert.match(markup,/aria-valuemax="1"/);
+ assert.doesNotMatch(markup,/data-action="noticeNext"/);
+});
+
+test("Неверный и неполный ответы: мягкое сообщение без награды и без утечки решения",()=>{
+ const p=setup("type:phrase","5-6");
+ click({action:"pick",value:p.options.find(x=>x!==p.answer)});
+ click({action:"check"});
+ let markup=el("activity").innerHTML;
+ assert.match(markup,/chudo-result--retry/);
+ assert.match(markup,/Не совсем. Можно попробовать ещё раз!/);
+ assert.doesNotMatch(markup,/chudo-result__seal/);
+ const sudoku=setup("type:sudoku","5-6");
+ const index=sudoku.grid.findIndex(x=>x===null);
+ click({action:"sudokuCell",cell:String(index)});
+ click({action:"sudokuValue",value:String(sudoku.solution[index])});
+ click({action:"check"});
+ markup=el("activity").innerHTML;
+ assert.match(markup,/chudo-result--unfinished/);
+ assert.match(markup,/Закончите задание полностью для проверки/);
+ assert.doesNotMatch(markup,/chudo-result__seal/);
+});
+
+test("Подсказки и поздравления не попадают в детские задания А4",()=>{
+ const p=setup("type:phrase","7-9",1);
+ click({action:"hint"});
+ click({action:"hint"});
+ globalThis.requestAnimationFrame=cb=>cb();globalThis.window={print(){}};
+ el("printBtn").handlers.click();
+ let page=el("printRoot").innerHTML.split('<section class="answer-heading">')[0];
+ assert.doesNotMatch(page,/СЕКРЕТНЫЙ СОВЕТ|chudo-result--win|chudo-hint/);
+ click({action:"pick",value:p.answer});
+ click({action:"check"});
+ el("printBtn").handlers.click();
+ page=el("printRoot").innerHTML.split('<section class="answer-heading">')[0];
+ assert.doesNotMatch(page,/МАЛЕНЬКАЯ ПОБЕДА|chudo-result__seal|Верно! Отличная работа/);
 });
