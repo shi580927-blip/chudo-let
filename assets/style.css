@@ -542,3 +542,16 @@ button.tangram-slot{cursor:pointer}.tangram-slot b{font-size:19px}
  .chudo-result__next:hover{transform:none}
 }
 @media print{.chudo-hint,.chudo-result,.chudo-hint-toggle{display:none!important}}
+
+/* Оригинальный прозрачный горизонтальный PNG из утверждённого бренд-направления.
+   Не перерисовывать буквы, пропеллер, паруса, след или звезду. */
+.site-head{min-height:104px;height:auto;padding-block:8px;gap:16px}
+.brand{display:flex;align-items:center;gap:15px;min-width:0;flex-shrink:1}
+.brand-logo{display:block;width:252px;height:84px;object-fit:contain;object-position:left center;flex:none}
+.brand-context{display:block;max-width:125px;padding-left:13px;border-left:1px solid #ded8ea;color:#73698c;font-size:11px;line-height:1.45;letter-spacing:.085em;text-transform:uppercase;font-weight:850}
+.brand:hover .brand-logo{filter:drop-shadow(0 3px 6px #6a34b81a)}
+.brand:focus-visible{outline:3px solid #36c3d6;outline-offset:4px;border-radius:10px}
+@media(max-width:740px){.brand-context{display:none}.site-head{min-height:86px}}
+@media(max-width:660px){.site-head{height:auto;min-height:78px;padding:6px 16px}.brand-logo{width:204px;height:68px}.version{white-space:nowrap}}
+@media(max-width:390px){.brand-logo{width:191px;height:64px}.version{font-size:9px;padding:5px 8px}}
+@media print{.site-head .brand-logo{max-width:90mm;height:auto}}
