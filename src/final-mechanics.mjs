@@ -38,7 +38,7 @@ export const checkDetective=(t,value)=>typeof value==="string"&&value===t.answer
 export function makeBranching(r){
  const index=Math.floor(r()*STORY_BANK.length),story=STORY_BANK[index];
  const steps=[0,1,2].map(i=>{
-  const correct=story.steps[i+1],bad=BRANCH_WRONG[index][i],answers=mix([{text:correct.text,icon:correct.icon,correct:true},{text:bad,icon:"🚫",correct:false}],r);
+  const correct=story.steps[i+1],bad=BRANCH_WRONG[index][i],answers=mix([{text:correct.text,icon:"◆",correct:true},{text:bad,icon:"◆",correct:false}],r);
   return {scene:story.steps[i].text,sceneIcon:story.steps[i].icon,choices:answers.map(x=>({text:x.text,icon:x.icon})),correctIndex:answers.findIndex(x=>x.correct),badEffect:"Так история не продвинется. Выбери действие, которое поможет герою."};
  });
  return {branchId:story.id,goal:story.steps[3].text,steps,answer:steps.map(x=>x.correctIndex)};
@@ -49,7 +49,7 @@ export function validateBranching(t){
  return t.steps.every((s,i)=>{
   if(s.scene!==story.steps[i].text||s.sceneIcon!==story.steps[i].icon||!Array.isArray(s.choices)||s.choices.length!==2||![0,1].includes(s.correctIndex)||t.answer[i]!==s.correctIndex)return false;
   const good=s.choices[s.correctIndex],bad=s.choices[1-s.correctIndex];
-  return good.text===story.steps[i+1].text&&good.icon===story.steps[i+1].icon&&bad.text===BRANCH_WRONG[index][i]&&bad.icon==="🚫";
+  return good.text===story.steps[i+1].text&&good.icon==="◆"&&bad.text===BRANCH_WRONG[index][i]&&bad.icon==="◆";
  });
 }
 export const checkBranching=(t,value)=>Array.isArray(value)&&value.length===t.answer.length&&value.every((v,i)=>v===t.answer[i]);
