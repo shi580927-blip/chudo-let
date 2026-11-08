@@ -136,7 +136,7 @@ function cardMarkup(kind,index,task){
   '<div class="qa-card__meta"><span class="qa-card__index">№ '+String(index+1).padStart(2,"0")+'</span><span class="qa-card__status">'+qaLabel(mark)+'</span></div>'+
   '<div class="qa-card__visual">'+visual(task)+'</div>'+
   '<div class="qa-card__prompt">'+esc(task.prompt)+'</div>'+
-  '<div class="qa-card__bottom"><span>Вариант '+esc(task.seed)+'</span><b>Открыть ↗</b></div>'+
+  '<div class="qa-card__bottom"><span>Вариант '+esc(state.seed)+'</span><b>Открыть ↗</b></div>'+
   '</button>';
 }
 function redrawOpenGroup(details){
