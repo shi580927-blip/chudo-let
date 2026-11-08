@@ -1,4 +1,4 @@
-import {CATALOG,THEMES,generateBundle,checkAnswer,solutionText,neighbors,solveMaze} from "./engine.mjs";
+import {CATALOG,THEMES,generateBundle,checkAnswer,solutionText,neighbors,solveMaze,contentKey} from "./engine.mjs";
 import {renderSymbol} from "./artwork.mjs";
 import {sceneSvg} from "./scene.mjs";
 import {tangramSvg,tangramPieceSvg} from "./next-mechanics.mjs";
@@ -291,7 +291,15 @@ function renderTask(){
 function updateBundle(){
  $("bundleTitle").textContent=state.bundle.title;
  $("bundleDetails").textContent=state.bundle.age+" лет · "+state.bundle.count+" заданий · вариант "+state.bundle.seed;
- $("validationBadge").textContent="✓ Все задания прошли проверку";
+ // Педагогически важна уникальность СМЫСЛА, а не номер seed или порядок карточек.
+ const keys=state.bundle.tasks.map(t=>t.kind+"|"+contentKey(t));
+ const unique=new Set(keys).size,repeat=keys.length-unique;
+ const badge=$("validationBadge");
+ badge.textContent=repeat
+  ?"⚠ "+unique+" разных из "+keys.length+" · "+repeat+" повторов"
+  :"✓ Проверена логика · все "+keys.length+" задания разные";
+ badge.classList.toggle("has-repeats",repeat>0);
+ badge.title=repeat?"Содержание некоторых заданий повторяется. Для полноценного комплекта нужно расширить словари и сюжеты.":"Сравниваются условия и правильные ответы, а не перестановка карточек.";
  renderTask();
 }
 function navigate(index){state.index=Math.max(0,Math.min(state.bundle.tasks.length-1,index));reset();renderTask();}

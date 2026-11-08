@@ -15,11 +15,12 @@ function el(id){
 globalThis.document={getElementById:el,querySelectorAll:()=>[]};
 await import("../src/app.mjs");
 const click=(dataset)=>el("activity").handlers.click({target:{closest:()=>({dataset})}});
-const setup=(focus,age="5-6")=>{
+const setup=(focus,age="5-6",count=7)=>{
  el("age").value=age;
+ el("count").value=String(count);
  el("focus").value=focus;
  el("generatorForm").handlers.submit({preventDefault(){}});
- return generateBundle({age,theme:"clouds",count:7,seed:20261107,focus}).tasks[0];
+ return generateBundle({age,theme:"clouds",count,seed:20261107,focus}).tasks[0];
 };
 test("Незаконченное судоку просит заполнить клетки вместо сообщения об ошибке",()=>{
  const puzzle=setup("type:sudoku");
@@ -240,4 +241,17 @@ test("Магазин: единственная покупка по сумме и
  const page=el("printRoot").innerHTML.split('<section class="answer-heading">')[0];
  assert.match(page,/shop-checkbox">□/);
  assert.doesNotMatch(page,/shop-item selected/);
+});
+
+test("Задания с небольшой библиотекой честно предупреждают о повторном содержании",()=>{
+ setup("type:story","7-9",20);
+ assert.match(el("validationBadge").textContent,/1 разных из 20/);
+ assert.match(el("validationBadge").textContent,/19 повторов/);
+ setup("type:pair","7-9",20);
+ assert.match(el("validationBadge").textContent,/8 разных из 20/);
+});
+test("Полный набор числовых заданий не показывает предупреждение о повторах",()=>{
+ setup("type:number","5-6",20);
+ assert.match(el("validationBadge").textContent,/все 20 задания разные/);
+ assert.doesNotMatch(el("validationBadge").textContent,/повторов/);
 });
