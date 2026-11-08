@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer,countSudokuSolutions,validSudokuSolution,traceMap,validateCrossword} from "../src/engine.mjs";
 import {WORD_BANK} from "../src/words.mjs";
-import {shopSolutions,tangramSvg} from "../src/next-mechanics.mjs";
+import {shopSolutions,tangramSvg,tangramPieceSvg,FIGURE_IDS} from "../src/next-mechanics.mjs";
 import {backpackSolutions,mirrorRight} from "../src/spatial.mjs";
 test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,26);});
 test("Генераторы всех тем и возрастов гарантированно корректны",()=>{
@@ -374,7 +374,7 @@ test("Космический рюкзак: галактика/Млечный П�
  assert.equal(sawPlanet,true);
 });
 
-test("Геометрический конструктор: восемь разных силуэтов, уникальные контуры и номера внутри SVG",()=>{
+test("Геометрический конструктор: двадцать разных силуэтов, уникальные контуры и номера внутри SVG",()=>{
  const figures=new Set();
  for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<90;seed++){
   const task=makeTask("tangram",age,theme,seed);
@@ -383,13 +383,13 @@ test("Геометрический конструктор: восемь разн
   assert.equal(checkAnswer(task,task.answer),true);
   figures.add(task.figure);
  }
- assert.equal(figures.size,8);
+ assert.equal(figures.size,20);
 });
-test("Конструктор: до исчерпания 8 силуэтов не повторяются, близких повторов нет",()=>{
+test("Конструктор: комплект из 20 заданий содержит 20 разных силуэтов без повторов",()=>{
  for(const age of ["5-6","7-9","10-12"])for(const theme of Object.keys(THEMES))for(let seed=0;seed<45;seed++){
   const b=generateBundle({age,theme,focus:"type:tangram",count:20,seed});
   const f=b.tasks.map(t=>t.figure);
-  assert.equal(new Set(f.slice(0,8)).size,8);
+  assert.equal(new Set(f).size,20);
   for(let i=0;i<f.length;i++)for(let gap=1;gap<=3&&i+gap<f.length;gap++)assert.notEqual(f[i],f[i+gap]);
   assert.ok(b.tasks.every(validateTask));
  }
@@ -459,4 +459,48 @@ test("Кораблик узнаваем: длинный корпус, мачта
   count++;
  }
  assert.equal(count,1260);
+});
+
+test("Библиотека фигур содержит ровно 20 уникальных названий и 5 разных деталей в каждой",()=>{
+ assert.equal(FIGURE_IDS.length,20);
+ assert.equal(new Set(FIGURE_IDS).size,20);
+ const names=new Set();
+ for(const figure of FIGURE_IDS){
+  const t=makeTask("tangram","5-6","clouds",700,null,figure);
+  assert.ok(t.figureName&&typeof t.figureName==="string");
+  assert.equal(names.has(t.figureName),false,figure);
+  names.add(t.figureName);
+  assert.equal(t.parts.length,5,figure);
+  assert.equal(new Set(t.parts.map(p=>p.shape)).size,5,figure);
+  assert.equal(new Set(t.parts.map(p=>p.id)).size,5,figure);
+  assert.equal(validateTask(t),true,figure);
+  assert.equal(checkAnswer(t,t.answer),true,figure);
+  assert.equal(checkAnswer(t,t.tray),false,figure);
+  const empty=tangramSvg(t,Array(5).fill(null));
+  const filled=tangramSvg(t,t.answer);
+  assert.equal((empty.match(/class="tangram-slot-number"/g)||[]).length,5,figure);
+  assert.equal((filled.match(/class="tangram-slot-number"/g)||[]).length,5,figure);
+  assert.doesNotMatch(empty,/undefined/,figure);
+  assert.doesNotMatch(filled,/undefined/,figure);
+  for(const p of t.parts){
+   const svg=tangramPieceSvg(p);
+   assert.match(svg,/<svg[^>]+viewBox/,figure+" "+p.id);
+   assert.doesNotMatch(svg,/undefined/,figure+" "+p.id);
+  }
+ }
+});
+test("20 разных фигур подряд воспроизводятся по seed во всех шести мирах",()=>{
+ let verified=0;
+ for(const age of ["5-6","7-9","10-12"])
+ for(const theme of Object.keys(THEMES))
+ for(let seed=0;seed<80;seed++){
+  const options={age,theme,focus:"type:tangram",count:20,seed};
+  const tasks=generateBundle(options).tasks;
+  assert.equal(tasks.length,20);
+  assert.deepEqual(new Set(tasks.map(t=>t.figure)),new Set(FIGURE_IDS));
+  assert.ok(tasks.every(t=>t.parts.length===5&&validateTask(t)));
+  assert.deepEqual(tasks.map(t=>t.figure),generateBundle(options).tasks.map(t=>t.figure));
+  verified++;
+ }
+ assert.equal(verified,1440);
 });
