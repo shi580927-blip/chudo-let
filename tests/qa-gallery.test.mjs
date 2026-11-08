@@ -68,3 +68,33 @@ test("Редакторский режим берёт номер задачи и�
  assert.match(source,/saveCurrent\(false\)/);
  assert.doesNotMatch(html,/id="qaAnswerText"[^>]*>[^<]+/);
 });
+
+test("QA: все 30 видов имеют читаемые миниатюры без раскрытия ответа",()=>{
+ const stripped=source.replace(/^import[^\n]*\n/gm,"");
+ assert.doesNotThrow(()=>new Function(stripped),"Модуль QA должен иметь валидный JavaScript");
+ const start=source.indexOf("function visual(t){"),end=source.indexOf("function cardMarkup(",start);
+ assert.ok(start>=0&&end>start);
+ const snippet=source.slice(start,end);
+ const visual=new Function("esc","symbolLine","gridMini","mazeMini","tangramSvg","sceneSvg",
+   snippet+";return visual;")(
+   x=>String(x).replace(/[&<>"]/g,""),
+   (list)=>"<span>"+list.join(" · ")+"</span>",
+   (list)=>"<span>"+list.join(" · ")+"</span>",
+   ()=>"<svg>maze</svg>",
+   ()=>"<svg>shape</svg>",
+   ()=>"<svg>scene</svg>"
+ );
+ const types=CATALOG.filter(x=>x.ready);
+ assert.equal(types.length,30);
+ const seen=new Set();
+ for(const type of types){
+  const task=generateBundle({theme:"clouds",age:"10-12",seed:20261107,focus:"type:"+type.id,count:20}).tasks[0];
+  const result=visual(task);
+  assert.ok(result.length>10,type.id);
+  assert.doesNotMatch(result,/undefined|NaN/,type.id);
+  if(type.id==="cipher")assert.equal(result.includes(task.answer),false,"Расшифровка до проверки не показывается");
+  if(type.id==="tangram")assert.match(result,/shape/);
+  seen.add(type.id);
+ }
+ assert.equal(seen.size,30);
+});
