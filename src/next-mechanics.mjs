@@ -82,8 +82,8 @@ const COMPOSITIONS=Object.freeze({
  mushroom:[
   ["stem","mushroom-stem",200,227,1,"#eecaa4",0],
   ["cap","mushroom-cap",200,126,1,"#e99c9b",0],
-  ["spots","mushroom-spots",186,115,1,"#fff3d8",0],
-  ["grass","mushroom-grass",198,307,1,"#a5d9b1",0],
+  ["spots","mushroom-spots",196,110,1,"#fff3d8",0],
+  ["grass","mushroom-grass",198,292,1,"#a5d9b1",0],
   ["leaf","mushroom-leaf",283,266,1,"#88ceb1",0]
  ],
  car:[
@@ -94,11 +94,11 @@ const COMPOSITIONS=Object.freeze({
   ["headlight","car-light",313,236,1,"#ffda88",0]
  ],
  butterfly:[
-  ["left-wing","butterfly-left",131,158,1,"#e7b3df",0],
-  ["right-wing","butterfly-right",267,157,1,"#9ad9e8",0],
+  ["left-wing","butterfly-left",143,158,1,"#e7b3df",0],
+  ["right-wing","butterfly-right",255,157,1,"#9ad9e8",0],
   ["body","butterfly-body",200,189,1,"#e9ca91",0],
   ["antennae","butterfly-antennae",200,83,1,"#b99adc",0],
-  ["patterns","butterfly-pattern",200,164,1,"#ffe19e",0]
+  ["patterns","butterfly-pattern",200,140,1,"#ffe19e",0]
  ],
  fish:[
   ["body","fish-body",185,177,1,"#9dd5ec",0],
@@ -255,7 +255,7 @@ const SHAPES={
  // 12 новых узнаваемых предметов с реальными отличающимися контурами.
  'mushroom-stem':'<path d="M-24 -66 Q-3 -82 22 -64 L20 44 Q15 64 33 68 Q0 78 -33 68 Q-15 51 -18 39Z"/>',
  'mushroom-cap':'<path d="M-111 35 C-111 -10 -70 -65 -11 -68 C49 -71 98 -23 109 35 Q75 52 42 44 Q0 59 -40 44 Q-75 50 -111 35Z"/>',
- 'mushroom-spots':'<path d="M-57 -17 Q-35 -39 -17 -15 Q-16 5 -40 7Z M7 -36 Q32 -39 37 -14 Q19 2 2 -9Z M53 5 Q79 2 82 25 Q63 36 53 22Z"/>',
+ 'mushroom-spots':'<circle cx="-43" cy="-6" r="12"/><circle cx="5" cy="-28" r="11"/><circle cx="58" cy="5" r="10"/>',
  'mushroom-grass':'<path d="M-117 26 L-89 -3 L-67 18 L-35 -12 L-10 18 L13 -6 L37 18 L63 -8 L86 17 L117 1 L105 30 L-105 30Z"/>',
  'mushroom-leaf':'<path d="M-57 13 C-34 -45 35 -45 62 -12 C41 29 -16 48 -57 13Z"/>',
  'car-body':'<path d="M-121 -34 Q-131 -30 -132 -8 L-130 20 Q-126 39 -106 42 H112 Q132 39 133 18 V-8 Q130 -29 109 -31 L75 -46 H-74Z"/>',
@@ -363,9 +363,9 @@ export function tangramSvg(task,placed=null,{small=false}={}){
   flower:{stem:[200,195],pot:[199,279],petals:[232,67],center:[200,95],leaf:[140,198]},
   balloon:{rig:[174,225],envelope:[249,76],stripe:[199,96],nozzle:[200,194],basket:[200,284]},
   castle:{wall:[205,204],"left-tower":[129,161],"right-tower":[268,177],gate:[200,274],flag:[300,54]},
-  mushroom:{stem:[201,226],cap:[252,125],spots:[163,108],grass:[191,310],leaf:[283,266]},
+  mushroom:{stem:[201,226],cap:[255,129],spots:[197,112],grass:[188,301],leaf:[283,266]},
   car:{body:[141,232],roof:[155,170],glass:[214,170],wheels:[200,287],headlight:[313,236]},
-  butterfly:{"left-wing":[92,119],"right-wing":[307,116],body:[200,210],antennae:[200,66],patterns:[133,164]},
+  butterfly:{"left-wing":[115,117],"right-wing":[285,116],body:[200,210],antennae:[200,66],patterns:[120,143]},
   fish:{body:[182,200],tail:[322,188],"top-fin":[197,105],"bottom-fin":[213,256],eye:[130,165]},
   owl:{body:[201,257],head:[205,97],mask:[200,138],wings:[107,218],feet:[200,292]},
   train:{boiler:[177,214],cabin:[278,162],chimney:[108,125],wheels:[195,281],cowcatcher:[296,243]},

@@ -639,3 +639,21 @@ test("Снеговик: корпус удлинён вверх, шляпа на 
  const svg=tangramSvg(t,Array(5).fill(null));
  assert.equal((svg.match(/class="tangram-slot-number"/g)||[]).length,5);
 });
+
+test("Гриб: три настоящих круглых пятнышка на шляпке, травка касается ножки",()=>{
+ const t=makeTask("tangram","5-6","forest",66,null,"mushroom");
+ const p=Object.fromEntries(t.parts.map(x=>[x.id,x]));
+ const spots=tangramPieceSvg(p.spots);
+ assert.equal((spots.match(/<circle /g)||[]).length,3);
+ assert.ok(p.grass.y-12<p.stem.y+75,"Травка должна начинаться до низа ножки");
+ assert.ok(Math.abs(p.grass.x-p.stem.x)<=3);
+ assert.ok(validateTask(t)&&checkAnswer(t,t.answer));
+});
+test("Бабочка: основания крыльев примыкают к туловищу, рисунок поднят",()=>{
+ const t=makeTask("tangram","5-6","forest",66,null,"butterfly");
+ const p=Object.fromEntries(t.parts.map(x=>[x.id,x]));
+ assert.ok(p["left-wing"].x+43>=p.body.x-18);
+ assert.ok(p["right-wing"].x-43<=p.body.x+18);
+ assert.ok(p.patterns.y<p["left-wing"].y);
+ assert.ok(validateTask(t)&&checkAnswer(t,t.answer));
+});
