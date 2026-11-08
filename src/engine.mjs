@@ -29,6 +29,13 @@ export const THEMES = {
  pirate:{name:"Пиратское приключение",icon:"🏴‍☠️",a:["🧭","🗝️","⚓","🪙","🗺️","💰"],b:["🦜","🐒","🐢","🦀","🐙","🦈"],labels:["Пиратские вещи","Животные"]},
  dino:{name:"Долина динозавров",icon:"🦕",a:["🦕","🦖","🥚","🦎","🐢","🐊"],b:["🌴","🌵","🌋","🪨","🌿","🍃"],labels:["Доисторические обитатели","Природа долины"]}
 };
+// Предметы рюкзака — особый классификационный набор, не меняющий остальные задания.
+const BACKPACK_SPACE={
+ a:["🚀","🛸","🛰️","🔭"],
+ b:["☀️","🌙","🌎","☄️","🪐","🌌"],
+ labels:["Космическая техника","Небесные объекты"]
+};
+const backpackTheme=(id)=>id==="space"?BACKPACK_SPACE:(THEMES[id]??THEMES.clouds);
 export const STORY_STEPS = [
  {icon:"🫘",text:"Герой посадил семечко"},
  {icon:"💧",text:"Полил землю"},
@@ -317,7 +324,7 @@ function taskFor(kind,age,theme,r,selectedWord=null){
   return {...q,prompt:"Какая правая половинка точно отражает левую, как в зеркале?",...makeSymmetry(t,age,r)};
  }
  if(kind==="backpack"){
-  return {...q,prompt:"Собери волшебный рюкзак по всем условиям. Выбери нужные предметы.",...makeBackpack(t,age,r)};
+  return {...q,prompt:"Собери волшебный рюкзак по всем условиям. Выбери нужные предметы.",...makeBackpack(backpackTheme(theme),age,r)};
  }
  if(kind==="word"){
   const pool=wordChoices(kind,theme,age);
@@ -456,7 +463,7 @@ export function validateTask(t){
  if(t.kind==="shop")return validateShop(t,THEMES[t.theme]??THEMES.clouds);
  if(t.kind==="puzzle")return validatePicturePuzzle(t,THEMES[t.theme]??THEMES.clouds);
  if(t.kind==="symmetry")return validateSymmetry(t,THEMES[t.theme]??THEMES.clouds);
- if(t.kind==="backpack")return validateBackpack(t,THEMES[t.theme]??THEMES.clouds);
+ if(t.kind==="backpack")return validateBackpack(t,backpackTheme(t.theme));
  if(t.kind==="word"||t.kind==="syllables"){
   if(typeof t.answer!=="string"||!Array.isArray(t.tiles)||typeof t.icon!=="string")return false;
   const dictionary=WORD_BANK[t.theme]??[];

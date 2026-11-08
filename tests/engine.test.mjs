@@ -353,3 +353,23 @@ test("Отдельные новые задания фильтруются по �
   assert.ok(b.tasks.every(t=>t.kind===kind&&validateTask(t)));
  }
 });
+
+test("Космический рюкзак: галактика/Млечный Путь — небесный объект, а не техника; звезда только признак",()=>{
+ const sky=["☀️","🌙","🌎","☄️","🪐","🌌"];
+ const equipment=["🚀","🛸","🛰️","🔭"];
+ let sawGalaxy=false,sawPlanet=false;
+ for(const age of ["5-6","7-9","10-12"])for(let seed=0;seed<350;seed++){
+  const t=makeTask("backpack",age,"space",seed);
+  assert.equal(validateTask(t),true);
+  assert.deepEqual(t.labels,["Космическая техника","Небесные объекты"]);
+  for(const item of t.items){
+   assert.equal(["⭐","🌟"].includes(item.icon),false);
+   assert.equal(item.group===0?equipment.includes(item.icon):sky.includes(item.icon),true);
+   if(item.icon==="🌌"){sawGalaxy=true;assert.equal(item.group,1);}
+   if(item.icon==="🪐"){sawPlanet=true;assert.equal(item.group,1);}
+  }
+  assert.equal(checkAnswer(t,t.answer),true);
+ }
+ assert.equal(sawGalaxy,true);
+ assert.equal(sawPlanet,true);
+});

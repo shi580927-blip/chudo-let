@@ -131,6 +131,7 @@ function board(t,print=false){
    const weight=Array.from({length:item.weight},()=>'<span class="pack-pip"></span>').join("");
    return '<'+tag+' class="pack-item'+(marked&&!print?' selected':'')+'"'+(print?'':' type="button" data-action="packToggle" data-value="'+i+'" aria-pressed="'+marked+'"')+'>'+
     '<span class="pack-item-icon">'+draw(item.icon,t.theme)+'</span>'+
+    (t.theme==="space"&&item.icon==="🌌"?'<span class="pack-item-name">Млечный Путь</span>':t.theme==="space"&&item.icon==="🪐"?'<span class="pack-item-name">Планета</span>':'')+
     '<span class="pack-item-label">'+escapeHtml(t.labels[item.group])+'</span>'+
     '<span class="pack-weight" aria-label="Вес '+item.weight+' жетонов">'+weight+'</span>'+
     (t.stamps===null?'':'<span class="pack-stamp">'+(item.stamp?'⭐':'')+'</span>')+
