@@ -119,7 +119,7 @@ const COMPOSITIONS=Object.freeze({
   ["cabin","train-cabin",274,167,1,"#c7abe5",0],
   ["chimney","train-chimney",108,125,1,"#edaf9b",0],
   ["wheels","train-wheels",197,279,1,"#7b799a",0],
-  ["cowcatcher","train-plow",319,240,1,"#ffcf86",0]
+  ["cowcatcher","train-plow",285,240,1,"#ffcf86",0]
  ],
  lighthouse:[
   ["tower","lighthouse-tower",200,209,1,"#e7b0ae",0],
@@ -130,17 +130,18 @@ const COMPOSITIONS=Object.freeze({
  ],
  umbrella:[
   ["canopy","umbrella-canopy",200,138,1,"#c0a5ef",0],
-  ["shaft","umbrella-shaft",200,225,1,"#b9d4ed",0],
-  ["handle","umbrella-handle",206,284,1,"#d7b18d",0],
-  ["tip","umbrella-tip",200,65,1,"#f7ce86",0],
-  ["raindrops","umbrella-rain",300,213,1,"#91d5e8",0]
+  ["shaft","umbrella-shaft",200,198,1,"#b9d4ed",0],
+  ["handle","umbrella-handle",200,273,1,"#d7b18d",0],
+  ["tip","umbrella-tip",200,67,1,"#f7ce86",0],
+  ["raindrops","umbrella-rain",267,215,.8,"#91d5e8",0]
  ],
  snowman:[
+  // Удлинённая вверх на треть голова/верхняя секция корпуса, шляпа прижата к макушке.
   ["snow","snowman-body",200,207,1,"#e9f7fd",0],
-  ["hat","snowman-hat",200,72,1,"#b3a0df",0],
-  ["scarf","snowman-scarf",200,173,1,"#f3adad",0],
-  ["face","snowman-face",200,124,1,"#f8ce85",0],
-  ["arms","snowman-arms",200,209,1,"#c6a17c",0]
+  ["hat","snowman-hat",200,54,1,"#b3a0df",0],
+  ["scarf","snowman-scarf",200,180,1,"#f3adad",0],
+  ["face","snowman-face",200,115,.78,"#f8ce85",0],
+  ["arms","snowman-arms",200,209,.86,"#c6a17c",0]
  ],
  cat:[
   ["body","cat-body",197,225,1,"#d6b3e9",0],
@@ -163,7 +164,7 @@ const COMPOSITIONS=Object.freeze({
   ["tower","submarine-tower",183,153,1,"#d2b4e8",0],
   ["periscope","submarine-scope",205,96,1,"#e7c497",0],
   ["windows","submarine-windows",187,213,1,"#ffedac",0],
-  ["propeller","submarine-propeller",313,213,1,"#b5a4d8",0]
+  ["propeller","submarine-propeller",321,213,.47,"#b5a4d8",0]
  ]
 });
 const CONSTRUCTION_NAMES={
@@ -289,10 +290,10 @@ const SHAPES={
  'lighthouse-rocks':'<path d="M-120 36 L-98 -4 L-55 8 L-28 -29 L8 -12 L40 -24 L67 12 L98 -5 L120 36Z"/>',
  'umbrella-canopy':'<path d="M-122 29 Q-116 -55 0 -75 Q112 -56 122 29 Q98 8 76 29 Q49 4 25 29 Q0 4 -25 29 Q-49 5 -76 29 Q-101 7 -122 29Z"/>',
  'umbrella-shaft':'<path d="M-9 -69 H9 L8 62 H-8Z"/>',
- 'umbrella-handle':'<path d="M-10 -62 H10 V2 Q10 26 29 27 Q51 30 48 8 H68 Q70 49 27 50 Q-10 49 -10 8Z"/>',
- 'umbrella-tip':'<path d="M-18 42 L0 -48 L18 42Z"/>',
+ 'umbrella-handle':'<path d="M-9 -40 H9 V2 C9 20 18 29 30 29 C43 29 48 19 48 9 H65 C65 39 49 51 28 51 C5 51 -9 35 -9 5Z"/>',
+ 'umbrella-tip':'<path d="M-10 12 L0 -29 L10 12Z"/>',
  'umbrella-rain':'<path d="M-44 -31 Q-68 8 -51 19 Q-28 25 -35 6Z M20 -47 Q-7 3 13 21 Q35 30 31 5Z M66 -12 Q44 31 61 44 Q84 43 76 23Z"/>',
- 'snowman-body':'<path d="M0 -95 C-47 -95 -62 -54 -54 -24 C-91 -13 -104 50 -66 78 C-44 101 43 101 66 78 C104 50 91 -13 54 -24 C62 -54 47 -95 0 -95Z"/>',
+ 'snowman-body':'<path d="M0 -125 C-47 -125 -64 -84 -56 -40 C-91 -22 -104 48 -66 78 C-44 101 43 101 66 78 C104 48 91 -22 56 -40 C64 -84 47 -125 0 -125Z"/>',
  'snowman-hat':'<path d="M-68 29 H68 V17 H40 V-41 H-39 V17 H-68Z"/>',
  'snowman-scarf':'<path d="M-68 -34 Q0 -14 68 -34 L66 0 Q13 17 -49 3 L-32 57 L-54 69 L-83 3Z"/>',
  'snowman-face':'<path d="M-45 -35 A10 10 0 1 1 -45 -15 A10 10 0 1 1 -45 -35Z M24 -35 A10 10 0 1 1 24 -15 A10 10 0 1 1 24 -35Z M-2 -11 L61 8 L-2 16Z M-30 25 Q0 50 32 25" stroke-width="5" fill="none"/>',
@@ -367,13 +368,13 @@ export function tangramSvg(task,placed=null,{small=false}={}){
   butterfly:{"left-wing":[92,119],"right-wing":[307,116],body:[200,210],antennae:[200,66],patterns:[133,164]},
   fish:{body:[182,200],tail:[322,188],"top-fin":[197,105],"bottom-fin":[213,256],eye:[130,165]},
   owl:{body:[201,257],head:[205,97],mask:[200,138],wings:[107,218],feet:[200,292]},
-  train:{boiler:[177,214],cabin:[278,162],chimney:[108,125],wheels:[195,281],cowcatcher:[318,243]},
+  train:{boiler:[177,214],cabin:[278,162],chimney:[108,125],wheels:[195,281],cowcatcher:[296,243]},
   lighthouse:{tower:[199,227],lantern:[200,106],roof:[200,48],beams:[304,110],rocks:[190,315]},
-  umbrella:{canopy:[126,130],shaft:[200,217],handle:[219,300],tip:[200,63],raindrops:[300,216]},
-  snowman:{snow:[197,264],hat:[200,65],scarf:[145,171],face:[200,118],arms:[292,206]},
+  umbrella:{canopy:[126,130],shaft:[200,198],handle:[210,297],tip:[200,56],raindrops:[282,215]},
+  snowman:{snow:[198,263],hat:[199,53],scarf:[148,180],face:[200,113],arms:[286,210]},
   cat:{body:[191,244],head:[134,106],tail:[307,221],paws:[187,295],face:[175,137]},
   snail:{body:[120,280],head:[293,214],shell:[123,159],spiral:[184,195],feelers:[249,69]},
-  submarine:{hull:[126,225],tower:[169,147],periscope:[209,83],windows:[218,213],propeller:[313,212]}
+  submarine:{hull:[126,225],tower:[169,147],periscope:[209,83],windows:[218,213],propeller:[321,214]}
  };
  if(!small)for(let i=0;i<task.parts.length;i++){
   const part=task.parts[i],position=anchors[task.figure]?.[part.id]??[part.x,part.y];

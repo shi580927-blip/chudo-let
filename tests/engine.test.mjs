@@ -595,3 +595,47 @@ test("Ракета: два стабилизатора присоединены �
  assert.ok(q.shell.y+73>=q.body.y-28);
  assert.ok(q.feelers.y+52>=q.head.y-73);
 });
+
+
+test("ART: зонтик, паровозик и подводная лодка целиком помещаются в SVG без обрезания справа",()=>{
+ const bounds={
+  train:{cowcatcher:[-41,58],cabin:[-66,66]},
+  umbrella:{raindrops:[-68,84],canopy:[-122,122],handle:[-9,65]},
+  submarine:{propeller:[-74,74],hull:[-126,128]}
+ };
+ for(const [figure,parts] of Object.entries(bounds))for(let seed=0;seed<60;seed++){
+  const task=makeTask("tangram","5-6","clouds",seed,null,figure);
+  const v=tangramSvg(task,Array(5).fill(null)).match(/viewBox="([^"]+)"/)[1].split(/\s+/).map(Number);
+  for(const [id,[minX,maxX]] of Object.entries(parts)){
+   const p=task.parts.find(x=>x.id===id);
+   assert.ok(p.x+minX*p.scale>=v[0]+5,figure+"/"+id+" clipped on left");
+   assert.ok(p.x+maxX*p.scale<=v[0]+v[2]-6,figure+"/"+id+" clipped on right");
+  }
+  assert.equal(validateTask(task),true);
+  assert.equal(checkAnswer(task,task.answer),true);
+ }
+});
+
+test("Зонтик: ручка совпадает по оси со стержнем, соединена без перекоса",()=>{
+ const task=makeTask("tangram","5-6","clouds",13,null,"umbrella");
+ const shaft=task.parts.find(x=>x.id==="shaft"),handle=task.parts.find(x=>x.id==="handle");
+ assert.equal(shaft.x,handle.x);
+ assert.ok(shaft.y+62>handle.y-40);
+ assert.ok(shaft.y+62<handle.y+2);
+ const rain=task.parts.find(x=>x.id==="raindrops");
+ assert.ok(rain.x+84*rain.scale<365);
+});
+
+test("Снеговик: корпус удлинён вверх, шляпа на макушке, лицо уменьшено",()=>{
+ const t=makeTask("tangram","5-6","clouds",17,null,"snowman");
+ const p=Object.fromEntries(t.parts.map(x=>[x.id,x]));
+ assert.ok(p.snow.y-125<=p.hat.y+29);
+ assert.ok(p.hat.y<p.face.y);
+ assert.ok(p.face.scale<.85);
+ assert.ok(p.scarf.y>p.face.y);
+ assert.equal(new Set(t.parts.map(x=>x.shape)).size,5);
+ assert.ok(validateTask(t));
+ assert.ok(checkAnswer(t,t.answer));
+ const svg=tangramSvg(t,Array(5).fill(null));
+ assert.equal((svg.match(/class="tangram-slot-number"/g)||[]).length,5);
+});
