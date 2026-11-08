@@ -400,7 +400,7 @@ function outcomeCard(t){
  const finished=done===total,isLast=state.index>=total-1;
  const nextButton=isLast?'':
   '<button class="chudo-result__next" type="button" data-action="noticeNext" aria-label="Перейти к следующему заданию">Дальше, к приключениям <span aria-hidden="true">→</span></button>';
- return '<section class="feedback good chudo-result chudo-result--win" role="status" aria-live="polite">'+
+ return '<section class="feedback chudo-result chudo-result--win" role="status" aria-live="polite">'+
   '<span class="chudo-result__spark chudo-result__spark--a" aria-hidden="true">✦</span>'+
   '<span class="chudo-result__spark chudo-result__spark--b" aria-hidden="true">✧</span>'+
   '<span class="chudo-result__spark chudo-result__spark--c" aria-hidden="true">✳</span>'+
@@ -423,8 +423,8 @@ function renderTask(){
  const t=task(),ready=state.answer!==null;
  const success=state.checked===true&&checkAnswer(t,state.answer);
  const hintText=state.hint===0?"✧ Подсказка":state.hint===1?"✧ Ещё один намёк":"✧ Скрыть подсказки";
- const hintButton='<button class="ghost chudo-hint-toggle'+(state.hint?' is-open':'')+'" type="button" data-action="hint" aria-expanded="'+(state.hint>0)+'" '+(state.hint?'aria-controls="gameHintCard"':'')+'>'+hintText+'</button>';
- $("activity").innerHTML='<div class="activity-intro"><div><span class="group">'+escapeHtml(CATALOG.find(c=>c.id===t.kind).group)+' · Задание '+(state.index+1)+'</span><h3>'+escapeHtml(t.title)+'</h3></div><span class="status ready">● Можно играть</span></div><p class="prompt">'+promptHTML(t)+'</p><div class="game-board">'+board(t)+'</div><div class="game-actions"><button class="primary" data-action="check" '+(!ready?'disabled':'')+'>✓ Проверить</button><button class="ghost" data-action="reset">↻ Сначала</button>'+hintButton+'</div>'+(!success?hintCard(t):'')+outcomeCard(t);
+ const hintButton=success?'':'<button class="ghost chudo-hint-toggle'+(state.hint?' is-open':'')+'" type="button" data-action="hint" aria-expanded="'+(state.hint>0)+'" '+(state.hint?'aria-controls="gameHintCard"':'')+'>'+hintText+'</button>';
+ $("activity").innerHTML='<div class="activity-intro"><div><span class="group">'+escapeHtml(CATALOG.find(c=>c.id===t.kind).group)+' · Задание '+(state.index+1)+'</span><h3>'+escapeHtml(t.title)+'</h3></div><span class="status ready">'+(success?'✓ Пройдено':'● Можно играть')+'</span></div><p class="prompt">'+promptHTML(t)+'</p><div class="game-board">'+board(t)+'</div><div class="game-actions"><button class="primary" data-action="check" '+(!ready||success?'disabled':'')+'>'+(success?'✓ Проверено':'✓ Проверить')+'</button><button class="ghost" data-action="reset">↻ Сначала</button>'+hintButton+'</div>'+(!success?hintCard(t):'')+outcomeCard(t);
  $("taskCounter").textContent="Задание "+(state.index+1)+" из "+state.bundle.tasks.length;
  $("prevBtn").disabled=state.index===0;$("nextBtn").disabled=state.index===state.bundle.tasks.length-1;
  renderNav();
