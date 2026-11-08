@@ -340,7 +340,19 @@ export function tangramSvg(task,placed=null,{small=false}={}){
   tree:{trunk:[199,251],crown:[191,91],branch:[134,159],fruit:[251,128],grass:[197,303]},
   flower:{stem:[200,195],pot:[199,279],petals:[232,67],center:[200,95],leaf:[140,198]},
   balloon:{rig:[174,225],envelope:[249,76],stripe:[199,96],nozzle:[200,194],basket:[200,284]},
-  castle:{wall:[258,220],gate:[220,263]}
+  castle:{wall:[258,220],gate:[220,263]},
+  mushroom:{stem:[201,226],cap:[252,125],spots:[163,108],grass:[191,310],leaf:[283,266]},
+  car:{body:[141,232],roof:[155,170],glass:[214,170],wheels:[200,287],headlight:[313,236]},
+  butterfly:{"left-wing":[92,119],"right-wing":[307,116],body:[200,210],antennae:[200,66],patterns:[133,164]},
+  fish:{body:[182,200],tail:[322,188],"top-fin":[197,105],"bottom-fin":[213,256],eye:[130,165]},
+  owl:{body:[201,257],head:[205,97],mask:[200,138],wings:[107,218],feet:[200,292]},
+  train:{boiler:[177,214],cabin:[278,162],chimney:[108,125],wheels:[195,281],cowcatcher:[318,243]},
+  lighthouse:{tower:[199,227],lantern:[200,106],roof:[200,48],beams:[304,110],rocks:[190,315]},
+  umbrella:{canopy:[126,130],shaft:[200,217],handle:[219,300],tip:[200,63],raindrops:[300,216]},
+  snowman:{snow:[197,264],hat:[200,65],scarf:[145,171],face:[200,118],arms:[292,206]},
+  cat:{body:[191,244],head:[134,106],tail:[307,221],paws:[187,295],face:[175,137]},
+  snail:{body:[249,264],shell:[115,177],spiral:[177,166],feelers:[288,115],leaf:[293,285]},
+  submarine:{hull:[126,225],tower:[169,147],periscope:[209,83],windows:[218,213],propeller:[313,212]}
  };
  if(!small)for(let i=0;i<task.parts.length;i++){
   const part=task.parts[i],position=anchors[task.figure]?.[part.id]??[part.x,part.y];
@@ -361,7 +373,19 @@ export function tangramPieceSvg(part){
   "tree-crown":.61,"tree-trunk":.68,"tree-meadow":.58,
   "flower-petals":.59,"flower-stem":.74,
   "balloon-envelope":.62,"balloon-stripe":.71,
-  "ship-mast":.48,"ship-sail":.67,"ship-hull":.47,"ship-flag":1,"ship-porthole":1.05
+  "ship-mast":.48,"ship-sail":.67,"ship-hull":.47,"ship-flag":1,"ship-porthole":1.05,
+  "mushroom-stem":.78,"mushroom-cap":.52,"mushroom-spots":.78,"mushroom-grass":.5,"mushroom-leaf":.95,
+  "car-body":.47,"car-roof":.70,"car-glass":.74,"car-wheels":.55,"car-light":1.05,
+  "butterfly-left":.56,"butterfly-right":.58,"butterfly-body":.73,"butterfly-antennae":.88,"butterfly-pattern":.46,
+  "fish-body":.60,"fish-tail":.94,"fish-dorsal":1.03,"fish-ventral":1.03,"fish-eye":1.10,
+  "owl-body":.63,"owl-head":.69,"owl-mask":.77,"owl-wings":.57,"owl-feet":.75,
+  "train-boiler":.53,"train-cabin":.76,"train-chimney":1.04,"train-wheels":.52,"train-plow":.97,
+  "lighthouse-tower":.62,"lighthouse-lamp":.93,"lighthouse-roof":.90,"lighthouse-rays":.49,"lighthouse-rocks":.49,
+  "umbrella-canopy":.49,"umbrella-shaft":.87,"umbrella-handle":.88,"umbrella-tip":1.07,"umbrella-rain":.77,
+  "snowman-body":.62,"snowman-hat":.87,"snowman-scarf":.70,"snowman-face":.78,"snowman-arms":.46,
+  "cat-body":.62,"cat-head":.69,"cat-tail":.75,"cat-paws":.79,"cat-face":.80,
+  "snail-body":.50,"snail-shell":.52,"snail-spiral":.88,"snail-feelers":.76,"snail-leaf":.72,
+  "submarine-hull":.48,"submarine-tower":.79,"submarine-scope":1.04,"submarine-windows":.53,"submarine-propeller":.80
  };
  const size=Math.min(part.scale,trayLimits[part.shape]??1.15);
  return '<svg viewBox="-66 -68 132 136" role="img" aria-label="Деталь '+part.id+'" class="tangram-piece-art">'+
