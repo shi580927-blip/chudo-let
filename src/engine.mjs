@@ -1,5 +1,6 @@
 import {WORD_BANK,allowedWords} from "./words.mjs";
 import {STORY_BANK,PAIR_BANK} from "./narrative-banks.mjs";
+import {PHRASE_BANK,makePhrase,validatePhrase,checkPhrase,makeDetective,validateDetective,checkDetective,makeBranching,validateBranching,checkBranching,makeTeam,validateTeam,checkTeam} from "./final-mechanics.mjs";
 import {makeTangram,validateTangram,checkTangram,FIGURE_IDS,makeMathPath,validateMathPath,checkMathPath,makeShop,validateShop,checkShop} from "./next-mechanics.mjs";
 import {makePicturePuzzle,validatePicturePuzzle,checkPicturePuzzle,makeSymmetry,validateSymmetry,checkSymmetry,makeBackpack,validateBackpack,checkBackpack} from "./spatial.mjs";
 // ЧУДОЛЁТ — независимый детерминированный генератор заданий.
@@ -20,7 +21,7 @@ export const CATALOG = [
  ["phrase","Закончи фразу","Речь",5],["cipher","Секретный шифр","Приключения",7],
  ["backpack","Волшебный рюкзак","Приключения",5],["detective","Маленький детектив","Приключения",6],
  ["branching","Приключение с выбором","Приключения",5],["team","Командная миссия","Приключения",6]
-].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","map","count","compare","number","word","syllables","story","crossword","cipher","puzzle","symmetry","backpack","tangram","mathpath","shop"].includes(id)}));
+].map(([id,name,group,minAge],i)=>({id,name,group,minAge,number:i+1,ready:["find","differences","shadow","memory","odd","sequence","sort","pair","table","sudoku","maze","map","count","compare","number","word","syllables","story","crossword","cipher","puzzle","symmetry","backpack","tangram","mathpath","shop","phrase","detective","branching","team"].includes(id)}));
 
 export const THEMES = {
  clouds:{name:"Облачная почта",icon:"☁️",a:["✉️","📦","🪁","🧭","🔔","🗝️","📮","🏷️","🖋️","👜","🎒","🗞️"],b:["🌈","⭐","☁️","🌙","☀️","⚡","🌧️","🌤️","❄️","🌪️","🌨️","🌌"],labels:["Почтовые находки","Небесные чудеса"]},
@@ -309,6 +310,10 @@ function wordChoices(kind,theme,age){
 function taskFor(kind,age,theme,r,selectedWord=null,selectedFigure=null){
  const t=THEMES[theme]||THEMES.clouds,combined=[...t.a,...t.b],short=age<=3;
  let q={kind,title:CATALOG.find(e=>e.id===kind)?.name??kind,theme,age};
+ if(kind==="phrase")return {...q,prompt:"Выбери слово, которое правильно завершит предложение.",...makePhrase(r)};
+ if(kind==="detective")return {...q,prompt:"Сопоставь обе улики. Кто подходит под два признака одновременно?",...makeDetective(t,r)};
+ if(kind==="branching")return {...q,prompt:"Выбирай действия героя. Ошибочная дорога приводит к тупику — можно попробовать снова.",...makeBranching(r)};
+ if(kind==="team")return {...q,prompt:"Распределите три роли. Каждый решает свою подсказку, затем соберите трёхзначный код.",...makeTeam(t,age,r)};
  if(kind==="tangram")return {...q,prompt:"Рассмотри контуры и собери фигуру из геометрических деталей.",...makeTangram(age,r,selectedFigure)};
  if(kind==="mathpath")return {...q,prompt:"Пройди числовую дорожку. На каждом шаге выбери правильный результат.",...makeMathPath(age,r)};
  if(kind==="shop")return {...q,prompt:"Купи указанное количество предметов, потратив ровно весь бюджет.",...makeShop(t,age,r)};
@@ -452,6 +457,10 @@ export function makeTask(kind,age="5-6",theme="clouds",seed=1,selectedWord=null,
 }
 export function validateTask(t){
  if(!t||!READY_IDS.includes(t.kind))return false;
+ if(t.kind==="phrase")return validatePhrase(t);
+ if(t.kind==="detective")return validateDetective(t,THEMES[t.theme]??THEMES.clouds);
+ if(t.kind==="branching")return validateBranching(t);
+ if(t.kind==="team")return validateTeam(t);
  if(t.kind==="tangram")return validateTangram(t);
  if(t.kind==="mathpath")return validateMathPath(t);
  if(t.kind==="shop")return validateShop(t,THEMES[t.theme]??THEMES.clouds);
@@ -540,6 +549,10 @@ export function validateTask(t){
  return false;
 }
 export function checkAnswer(t,value){
+ if(t.kind==="phrase")return checkPhrase(t,value);
+ if(t.kind==="detective")return checkDetective(t,value);
+ if(t.kind==="branching")return checkBranching(t,value);
+ if(t.kind==="team")return checkTeam(t,value);
  if(t.kind==="tangram")return checkTangram(t,value);
  if(t.kind==="mathpath")return checkMathPath(t,value);
  if(t.kind==="shop")return checkShop(t,value);
@@ -566,6 +579,10 @@ export function checkAnswer(t,value){
  return String(value)===String(t.answer);
 }
 export function solutionText(t){
+ if(t.kind==="phrase")return t.sentence.replace("___",t.answer)+". "+t.explanation;
+ if(t.kind==="detective"){const suspect=t.suspects.find(x=>x.id===t.answer);return "Подходит "+suspect.id+": "+suspect.itemA+" и "+suspect.itemB;}
+ if(t.kind==="branching")return t.steps.map((x,i)=>(i+1)+". "+x.choices[x.correctIndex].text).join(" → ");
+ if(t.kind==="team")return t.clues.map(x=>x.role+": "+x.digit).join("; ")+" · Код: "+t.answer;
  if(t.kind==="tangram")return "Фигуры в порядке контуров: "+t.parts.map(p=>p.id).join(", ");
  if(t.kind==="mathpath")return "Числовая цепочка: "+t.start+" → "+t.steps.map(s=>s.result).join(" → ");
  if(t.kind==="shop")return "Купи: "+t.answer.map(i=>t.items[i].icon+" ("+t.items[i].price+" монет)").join(", ")+"; итого "+t.budget;
@@ -592,6 +609,10 @@ export function solutionText(t){
 // Нужен для контроля повторов в комплекте, а не для проверки решения.
 export function contentKey(t){
  switch(t.kind){
+  case "phrase":return t.phraseId;
+  case "detective":return t.caseId;
+  case "branching":return t.branchId;
+  case "team":return t.answer;
   case "find":case "count":return t.target+"|"+t.answer;
   case "shadow":case "odd":return t.kind==="shadow"?t.target:t.cells[t.answer];
   case "pair":return t.target+"|"+t.answer;
@@ -621,6 +642,8 @@ function finiteVariety(kind,theme,age){
  const t=THEMES[theme]??THEMES.clouds;
  if(kind==="shadow"||kind==="odd")return new Set([...t.a,...t.b]).size;
  if(kind==="pair")return PAIR_BANK.length;
+ if(kind==="phrase")return PHRASE_BANK.length;
+ if(kind==="branching")return STORY_BANK.length;
  if(kind==="cipher")return (CIPHER_WORDS[theme]??CIPHER_WORDS.clouds).filter(x=>x.length<=(age<=5?6:age<=7?7:10)).length;
  if(kind==="story")return STORY_BANK.length;
  return null;
@@ -628,7 +651,7 @@ function finiteVariety(kind,theme,age){
 export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,focus="mixed"}={}){
  count=Math.max(1,Math.min(20,Number(count)||7));
  const eligible=(ids)=>ids.filter(id=>CATALOG.find(c=>c.id===id).minAge<=resolveAge(age));
- const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","map","compare","number","cipher","crossword","puzzle","symmetry","tangram","mathpath","shop"]:focus==="story"?["find","sort","sequence","maze","map","count","pair","story","cipher","word","syllables","crossword","puzzle","backpack","tangram","mathpath","shop"]:READY_IDS;
+ const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","map","compare","number","cipher","crossword","puzzle","symmetry","tangram","mathpath","shop","phrase","detective","branching","team"]:focus==="story"?["find","sort","sequence","maze","map","count","pair","story","cipher","word","syllables","crossword","puzzle","backpack","tangram","mathpath","shop","phrase","detective","branching","team"]:READY_IDS;
  const pool=eligible(candidates);
  if(pool.length===0)throw new Error("Эта механика пока не подходит выбранному возрасту.");
  const r=seeded(seed),tasks=[],cycles=new Map(),recentWords=[],figureRecent=[],contentSeen=new Map(),contentRecent=new Map();
