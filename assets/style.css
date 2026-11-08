@@ -403,3 +403,142 @@ button.tangram-slot{cursor:pointer}.tangram-slot b{font-size:19px}
 .team-keypad button{min-width:43px;min-height:43px;border-radius:11px;background:#fff;border:2px solid #d5c2ec;color:#523880;font-weight:900}
 @media(max-width:690px){.team-cards{grid-template-columns:1fr}.final-choices,.branch-choices{grid-template-columns:1fr}.detective-avatar,.detective-traits{font-size:27px}}
 @media print{.print-task .team-cards{grid-template-columns:repeat(3,1fr)}.print-task .team-role{break-inside:avoid;border:1px solid #bbb;padding:3mm}.print-task .detective-suspect,.print-task .branch-step{break-inside:avoid}.print-task .phrase-sentence{background:#fff}.print-task .branch-choice{font-weight:400;border:1px solid #aaa}.print-task .branch-board,.print-task .team-board{gap:2mm}}
+
+
+/* ЧУДОЛЁТ / игровая обратная связь v0.2 — издательский свет, фактура и мягкая награда.
+   Только интерфейс: подсказки не показывают ответы, печатные задания не меняются. */
+.chudo-hint,.chudo-result{box-sizing:border-box;position:relative;isolation:isolate;overflow:hidden}
+.chudo-hint{
+  display:grid;grid-template-columns:78px minmax(0,1fr);
+  gap:18px;margin-top:18px;padding:22px 25px;border-radius:21px;
+  border:1.5px solid #e9d5a3;
+  background:radial-gradient(circle at 5% 5%,#fff7dc 0,transparent 38%),linear-gradient(115deg,#fffdf6 10%,#fff4df 100%);
+  box-shadow:0 12px 30px #755b3310,0 2px 0 #f6e5b5;
+  color:#4a3c52;
+  animation:chudo-appear .36s ease-out both
+}
+.chudo-hint::before{content:"";position:absolute;right:-34px;top:-39px;width:130px;height:130px;border:1px solid #ddbe7c65;border-radius:50%;pointer-events:none}
+.chudo-hint::after{content:"";position:absolute;right:34px;bottom:15px;width:62px;height:62px;border:1px dashed #d6b66c7c;border-radius:50%;pointer-events:none}
+.chudo-hint__illustration{
+  position:relative;width:70px;height:78px;display:flex;justify-content:center;align-items:center;
+  border-radius:21px 21px 27px 27px;background:linear-gradient(150deg,#ffe9ac,#ffc74d);
+  box-shadow:inset 0 1px 0 #ffffffb8,0 6px 16px #dcac5152;
+  transform:rotate(-5deg);align-self:start
+}
+.chudo-hint__lamp{font-size:43px;font-weight:800;color:#6a34b8;line-height:1;text-shadow:0 2px 0 #fff5d9}
+.chudo-hint__glow{position:absolute;right:-10px;top:-10px;color:#e19a2f;font-size:25px}
+.chudo-hint__content{position:relative;z-index:1;min-width:0}
+.chudo-hint__eyebrow{font-size:11px;letter-spacing:.13em;font-weight:900;color:#936427}
+.chudo-hint__title{font-size:clamp(18px,2.2vw,22px);font-weight:900;color:#603486;line-height:1.25;margin:5px 0 12px}
+.chudo-hint__step{
+ display:flex;align-items:flex-start;gap:12px;
+ color:#56465d;font-size:15px;font-weight:650;line-height:1.6;margin:0
+}
+.chudo-hint__step--second{margin-top:12px;padding-top:12px;border-top:1px dashed #dfc28e}
+.chudo-hint__number{
+ flex:0 0 auto;display:grid;place-items:center;width:28px;height:28px;
+ background:#fff;border:1px solid #e6cc92;border-radius:9px;
+ font-size:11px;letter-spacing:.03em;color:#865b17;font-weight:900
+}
+.chudo-hint__footer{display:block;font-size:12px;color:#8e7460;margin-top:14px}
+.chudo-hint-toggle.is-open{border-color:#d9b96c;background:#fff8e9;color:#71449e}
+.chudo-result{
+ display:flex;align-items:flex-start;gap:16px;margin-top:18px;
+ border-radius:20px;padding:19px 22px;line-height:1.5;
+ box-shadow:0 10px 26px #5650720e;border:1px solid transparent;
+ animation:chudo-appear .33s ease-out both
+}
+.chudo-result__body{flex:1;min-width:0;position:relative;z-index:1}
+.chudo-result__eyebrow{font-size:10px;letter-spacing:.16em;font-weight:1000;margin-bottom:4px}
+.chudo-result h4{font-size:clamp(18px,2.3vw,24px);margin:0 0 6px;font-weight:900;line-height:1.2;letter-spacing:-.015em}
+.chudo-result p{margin:0;font-size:14px;line-height:1.6;font-weight:600}
+.chudo-result__icon{
+ flex:0 0 auto;display:grid;place-items:center;width:58px;height:58px;
+ background:#fff;border:2px solid #e5d4e5;border-radius:18px;
+ font-size:28px;font-weight:900;line-height:1
+}
+.chudo-result__icon--small{width:50px;height:50px}
+.chudo-result--unfinished{
+ background:linear-gradient(110deg,#fffdf9,#fff6e5);
+ border-color:#ecddbf;color:#644c2d
+}
+.chudo-result--unfinished .chudo-result__icon{background:#fff2cc;color:#936327;border-color:#f1dba8}
+.chudo-result--unfinished .chudo-result__eyebrow{color:#9e7a43}
+.chudo-result--retry{
+ background:linear-gradient(110deg,#f9f7ff,#f2edff);
+ border-color:#dcd0f5;color:#5a4679
+}
+.chudo-result--retry .chudo-result__icon{background:#e6dcff;color:#6544ab;border-color:#d6c5f6}
+.chudo-result--retry .chudo-result__eyebrow{color:#7b60b6}
+.chudo-result--win{
+ align-items:flex-start;gap:23px;padding:25px 28px 23px;min-height:190px;
+ border:1.5px solid #e3d1ec;
+ background:radial-gradient(circle at 4% 12%,#fff2c7 0,transparent 36%),
+ linear-gradient(120deg,#fffdf8 0%,#fbf3ff 55%,#eefafb 100%);
+ color:#4e3769;
+ box-shadow:0 13px 34px #643f9d1c,inset 0 1px 0 #fff
+}
+.chudo-result--win::before,.chudo-result--win::after{
+ content:"";position:absolute;z-index:0;border-radius:50%;pointer-events:none
+}
+.chudo-result--win::before{width:165px;height:165px;right:-78px;top:-89px;border:24px solid #ffc74d23}
+.chudo-result--win::after{width:128px;height:128px;bottom:-92px;right:13%;border:21px solid #36c3d615}
+.chudo-result__seal{
+ display:grid;place-items:center;position:relative;flex:0 0 auto;
+ width:87px;height:87px;margin-top:3px;border-radius:26px;
+ background:linear-gradient(155deg,#ffe7a1,#ffc74d 63%,#f0ad32);
+ transform:rotate(-7deg);
+ border:1px solid #efb643;box-shadow:0 8px 0 #e3bf6961,0 14px 24px #a66e2822,inset 0 2px 3px #ffffffb5;
+ animation:chudo-seal-pop .65s cubic-bezier(.15,.88,.32,1.21) both
+}
+.chudo-result__seal span{font-size:53px;line-height:1;color:#fff9e8;text-shadow:0 3px 0 #cc8e32,0 1px 5px #a96c25}
+.chudo-result--win .chudo-result__eyebrow{color:#7853b3}
+.chudo-result--win h4{font-size:clamp(22px,2.7vw,31px);color:#5e2d9d;margin-bottom:6px}
+.chudo-result--win p{font-size:14px;color:#5b5270}
+.chudo-result__spark{position:absolute;z-index:0;color:#e2aa44;font-size:20px;pointer-events:none;animation:chudo-spark 2.7s ease-in-out infinite}
+.chudo-result__spark--a{right:9%;top:16%;font-size:24px}
+.chudo-result__spark--b{right:20%;top:5%;font-size:15px;animation-delay:.45s;color:#45b8c9}
+.chudo-result__spark--c{left:18px;bottom:15px;font-size:14px;animation-delay:.9s;color:#9b74d7}
+.chudo-result__progress-label{
+ display:flex;justify-content:space-between;gap:14px;margin-top:17px;
+ color:#6c5683;font-size:12px;font-weight:850;max-width:405px
+}
+.chudo-result__progress{max-width:405px;height:9px;margin-top:7px;overflow:hidden;border:1px solid #e7ddf1;background:#f5ecfb;border-radius:100px}
+.chudo-result__progress-fill{display:block;height:100%;background:linear-gradient(90deg,#36c3d6,#6a34b8);border-radius:100px;transition:width .35s ease}
+.chudo-result__next{
+ margin-top:16px;display:inline-flex;align-items:center;justify-content:center;gap:12px;
+ min-height:43px;padding:10px 17px;border:0;border-radius:12px;
+ background:#6a34b8;color:#fff;font:inherit;font-size:14px;font-weight:850;
+ box-shadow:0 4px 0 #4b218a;cursor:pointer
+}
+.chudo-result__next:hover{background:#5928a5;transform:translateY(-1px)}
+.chudo-result__next:active{box-shadow:0 2px 0 #4b218a;transform:translateY(2px)}
+.chudo-result__next:focus-visible,.chudo-hint-toggle:focus-visible{outline:3px solid #36c3d6;outline-offset:3px}
+.chudo-result__last{display:block;margin-top:11px;font-size:12px;color:#6b6380}
+@keyframes chudo-appear{from{opacity:.15;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes chudo-seal-pop{0%{transform:rotate(-18deg) scale(.65)}70%{transform:rotate(2deg) scale(1.065)}100%{transform:rotate(-7deg) scale(1)}}
+@keyframes chudo-spark{0%,100%{opacity:.7;transform:translateY(0) scale(.9)}50%{opacity:1;transform:translateY(-5px) scale(1.08)}}
+@media(max-width:660px){
+ .chudo-hint{grid-template-columns:53px minmax(0,1fr);gap:12px;padding:16px 14px;border-radius:17px}
+ .chudo-hint__illustration{width:52px;height:60px;border-radius:16px}
+ .chudo-hint__lamp{font-size:34px}
+ .chudo-hint__step{font-size:14px;gap:8px}
+ .chudo-result{gap:10px;padding:16px 13px;border-radius:16px}
+ .chudo-result--win{gap:13px;padding:18px 14px 20px}
+ .chudo-result__seal{width:55px;height:55px;border-radius:17px}
+ .chudo-result__seal span{font-size:35px}
+ .chudo-result--win h4{font-size:22px}
+ .chudo-result__icon--small{width:42px;height:42px;font-size:23px}
+ .chudo-result__next{width:100%;font-size:13px}
+ .chudo-result__spark--b{right:6%}
+}
+@media(max-width:380px){
+ .chudo-hint{grid-template-columns:1fr}.chudo-hint__illustration{display:none}
+ .chudo-result__seal{display:none}.chudo-result--win{padding:18px}
+}
+@media(prefers-reduced-motion:reduce){
+ .chudo-hint,.chudo-result,.chudo-result__seal,.chudo-result__spark{animation:none!important}
+ .chudo-result__progress-fill{transition:none!important}
+ .chudo-result__next:hover{transform:none}
+}
+@media print{.chudo-hint,.chudo-result,.chudo-hint-toggle{display:none!important}}

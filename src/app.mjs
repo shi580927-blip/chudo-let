@@ -3,7 +3,7 @@ import {renderSymbol} from "./artwork.mjs";
 import {sceneSvg} from "./scene.mjs";
 import {tangramSvg,tangramPieceSvg} from "./next-mechanics.mjs";
 const $=id=>document.getElementById(id);
-const state={bundle:generateBundle(),index:0,answer:null,checked:false,hint:false,done:new Set(),view:"builder",phase:"observe",activeCell:null};
+const state={bundle:generateBundle(),index:0,answer:null,checked:false,hint:0,done:new Set(),view:"builder",phase:"observe",activeCell:null};
 const escapeHtml=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const draw=(symbol,theme=state.bundle.theme)=>renderSymbol(symbol,theme);
 /** Поднимаем искомый предмет до размера отдельной иллюстрации, включая телефон и печать. */
@@ -21,7 +21,7 @@ function promptHTML(t){
  return text;
 }
 function task(){return state.bundle.tasks[state.index];}
-function reset(){state.answer=null;state.checked=false;state.hint=false;state.phase="observe";state.activeCell=null;state.branchMessage="";state.revealedRoles=new Set();}
+function reset(){state.answer=null;state.checked=false;state.hint=0;state.phase="observe";state.activeCell=null;state.branchMessage="";state.revealedRoles=new Set();}
 function emojiGrid(arr,compact=false,theme=state.bundle.theme){
  return '<div class="emoji-grid'+(compact?' compact':'')+'">'+arr.map(x=>'<div class="emoji-tile">'+draw(x,theme)+'</div>').join("")+'</div>';
 }
@@ -318,15 +318,113 @@ function board(t,print=false){
 function hintFor(t){
  switch(t.kind){case"phrase":return"Произнеси всё предложение. Какое слово подходит по смыслу?";case"detective":return"Каждая улика подходит двум героям. Найди того, кому подходят обе сразу.";case"branching":return"Подумай, какое действие поможет герою приблизиться к цели. Неверный выбор можно исправить.";case"team":return"Один участник считает предметы, второй складывает, третий вычитает. Поделитесь ответами.";case"tangram":return"Посмотри на контур каждой фигуры и выбери подходящую деталь из набора.";case"mathpath":return"Начни со стартового числа. Каждый раз выполни действие, а потом выбери результат.";case"shop":return"Сначала выбери указанное количество товаров. Сложи цены — сумма должна совпасть с кошельком.";case"puzzle":return"Внимательно посмотри на образец. Сначала найди верхний левый фрагмент.";case"symmetry":return"Первая клетка слева должна оказаться последней в правой половинке той же строки.";case"backpack":return"Сначала отбери нужные группы, затем сложи вес и проверь золотую звезду.";case"word":return"Посмотри на картинку, назови предмет и выбирай буквы по одной.";case"syllables":return"Произнеси название предмета по слогам. Сначала выбери первый слог.";case"crossword":return"Начни со слова, которое легко узнать по картинке. В месте пересечения буква одна и та же.";case"map":return"Найди флажок. Следуй стрелкам по порядку, каждую стрелку считай одним шагом.";case"cipher":return"Для каждого значка найди букву в ключе. Записывай буквы по очереди.";case"number":return"Большой квадрат — сто, полоска из десяти точек — десять, маленький круг — один.";case"memory":return"Запомни все значки и их места, затем нажми кнопку и найди исчезнувший.";case"table":return"Сравни нужную строку и столбец: на пересечении должны быть оба значка.";case"sudoku":return"В каждой строке, столбце и квадрате 2×2 значки не повторяются.";case"differences":return"Сравни предметы в одинаковых клетках обеих картинок — начни с верхнего ряда.";case"find":case"count":return"Посмотри на каждую строчку слева направо и отмечай найденные значки.";case"odd":return"Пять картинок можно объединить в одну группу, а одну — нет.";case"shadow":return"Сравни общий контур, а не цвет.";case"sequence":return"Посмотри, через сколько шагов повторяется рисунок.";case"sort":return"Названия корзин помогут понять общее свойство.";case"pair":return"Подумай, что обычно используется вместе.";case"maze":return"Из каждой клетки можно перейти только туда, где нет стенки.";case"compare":return"Сосчитай предметы с каждой стороны.";case"story":return"Что произошло сначала, а что могло случиться только потом?";default:return"Посмотри внимательно на условие.";}
 }
+
+/** Праздничные сообщения не раскрывают ответ и меняются по смыслу занятия. */
+const SUCCESS_BY_GROUP={
+ "Внимание":["Ничего не ускользнуло!","Ты заметил важные детали. Настоящий исследователь!"],
+ "Логика":["Загадка разгадана!","Ты нашёл правило и довёл мысль до конца."],
+ "Пространство":["Путь найден!","Ты отлично разобрался с формами и направлениями."],
+ "Математика":["Всё сошлось!","Расчёт получился — отличная работа с числами."],
+ "Речь":["Словесный секрет открыт!","Ты собрал верный ответ и разгадал языковую загадку."],
+ "Приключения":["Миссия выполнена!","Ещё одно испытание приключения успешно пройдено."]
+};
+const NEXT_HINT={
+ phrase:"Прочитай предложение целиком с каждым вариантом. Одно слово делает его понятным.",
+ detective:"Сначала оставь только тех, кому подходит первая улика. Потом сравни их со второй.",
+ branching:"Подумай, какое действие действительно помогает герою достичь цели истории.",
+ team:"Первый игрок считает предметы, второй складывает, третий вычитает. Запиши результаты по порядку ролей.",
+ tangram:"Сначала сопоставь самую крупную деталь с её контуром. Затем проверь маленькие элементы.",
+ mathpath:"Следующий шаг всегда начинается с результата предыдущего шага.",
+ shop:"Сравни общую сумму с бюджетом. Если она велика, попробуй заменить дорогую вещь.",
+ puzzle:"Проверь, какие линии и детали продолжаются на соседнем кусочке картинки.",
+ symmetry:"Мысленно сложи рисунок по центральной линии: края должны совпасть зеркально.",
+ backpack:"Проверяй признаки по очереди: группа, звёздочка, количество и общий вес.",
+ word:"Посмотри на первые звуки в названии предмета и проверь, какие буквы остались.",
+ syllables:"Попробуй произнести каждый вариант вслух; начало и конец слова должны звучать естественно.",
+ crossword:"Сначала разгадай знакомое слово, а потом используй общую букву в пересечении.",
+ map:"Пройди каждый шаг отдельно и пересчитывай клетки после каждой стрелки.",
+ cipher:"Ищи в ключе не слово целиком, а каждый знак по очереди.",
+ number:"Сначала найди сотни, потом десятки и лишь затем единицы.",
+ memory:"Попробуй вспомнить, что было в каждой позиции до исчезновения предмета.",
+ table:"Выдели нужную строку и нужный столбец, затем найди их пересечение.",
+ sudoku:"Ищи строку или столбец, где уже больше всего значков. Какие ещё отсутствуют?",
+ differences:"Сравни клетки на одинаковых местах, а не целые картинки сразу.",
+ find:"Считай находки по рядам сверху вниз, чтобы не пропустить ни одну.",
+ count:"Отмечай мысленно каждый найденный предмет и двигайся по одной строке.",
+ shadow:"Смотри на выступающие части силуэта: ручку, хвост, крылья или углы.",
+ odd:"Назови общую категорию большинства картинок. Которая к ней не относится?",
+ sequence:"Найди повторяющийся фрагмент. С него начнётся следующий круг.",
+ sort:"Прочитай названия обеих корзин; каждый предмет подходит одной из групп.",
+ pair:"Представь, что используешь первый предмет. Что тебе понадобится вместе с ним?",
+ maze:"Переходить можно только через открытые проходы, не через стены.",
+ compare:"Попробуй составить пары из левых и правых предметов. С какой стороны останутся лишние?",
+ story:"Найди событие, без которого следующее не могло бы случиться."
+};
+function hintCard(t){
+ if(!state.hint)return "";
+ const first=escapeHtml(hintFor(t)),second=escapeHtml(NEXT_HINT[t.kind]??"Начни с самого простого шага и снова проверь условие.");
+ return '<section class="chudo-hint" id="gameHintCard" aria-label="Подсказки к заданию">'+
+  '<div class="chudo-hint__illustration" aria-hidden="true"><span class="chudo-hint__lamp">✧</span><span class="chudo-hint__glow">✦</span></div>'+
+  '<div class="chudo-hint__content"><div class="chudo-hint__eyebrow">СЕКРЕТНЫЙ СОВЕТ · '+state.hint+' ИЗ 2</div>'+
+  '<h4 class="chudo-hint__title">Присмотрись повнимательнее!</h4>'+
+  '<p class="chudo-hint__step"><span class="chudo-hint__number">01</span>'+first+'</p>'+
+  (state.hint>1?'<p class="chudo-hint__step chudo-hint__step--second"><span class="chudo-hint__number">02</span>'+second+'</p>':'')+
+  '<small class="chudo-hint__footer">Ответ пока секрет. Разгадка остаётся за тобой! ✨</small></div></section>';
+}
+function outcomeCard(t){
+ if(!state.checked)return "";
+ if(state.checked==="incomplete"){
+  const message=t.kind==="tangram"?"Сначала расставь все геометрические детали.":
+   t.kind==="mathpath"?"Выбери число на каждом шаге дорожки.":
+   t.kind==="shop"?"Сначала выбери ровно "+t.take+" предмета.":
+   t.kind==="puzzle"?"Сначала собери картинку полностью — расставь все фрагменты.":
+   t.kind==="backpack"?"Сначала выбери ровно "+t.count+" предмета для рюкзака.":
+   t.kind==="sudoku"?"Закончите задание полностью для проверки — заполните все пустые клетки.":
+   t.kind==="crossword"?"Заполни все белые клетки кроссворда, затем проверь ответ.":
+   t.kind==="branching"?"Пройди все три развилки, затем проверь результат.":
+   t.kind==="team"?"Соберите все три цифры командного кода, затем проверьте ответ.":
+   "Сначала заполни все буквы или цифры, затем проверим ответ.";
+  return '<section class="feedback chudo-result chudo-result--unfinished" role="status" aria-live="polite">'+
+   '<span class="chudo-result__icon chudo-result__icon--small" aria-hidden="true">✎</span><div class="chudo-result__body">'+
+   '<div class="chudo-result__eyebrow">ЕЩЁ ОДИН ШАГ</div><h4>Почти готово!</h4><p>'+escapeHtml(message)+'</p></div></section>';
+ }
+ if(!checkAnswer(t,state.answer)){
+  return '<section class="feedback chudo-result chudo-result--retry" role="status" aria-live="polite">'+
+   '<span class="chudo-result__icon chudo-result__icon--small" aria-hidden="true">↻</span><div class="chudo-result__body">'+
+   '<div class="chudo-result__eyebrow">ТВОЯ ЗАГАДКА ЖДЁТ</div><h4>Попробуем ещё раз?</h4>'+
+   '<p>Не совсем. Можно попробовать ещё раз! Проверь детали или открой подсказку.</p></div></section>';
+ }
+ const group=CATALOG.find(x=>x.id===t.kind)?.group??"Приключения";
+ const [heading,detail]=SUCCESS_BY_GROUP[group]??SUCCESS_BY_GROUP.Приключения;
+ const done=state.done.size,total=state.bundle.tasks.length,percentage=Math.round(done/total*100);
+ const finished=done===total,isLast=state.index>=total-1;
+ const nextButton=isLast?'':
+  '<button class="chudo-result__next" type="button" data-action="noticeNext" aria-label="Перейти к следующему заданию">Дальше, к приключениям <span aria-hidden="true">→</span></button>';
+ return '<section class="feedback good chudo-result chudo-result--win" role="status" aria-live="polite">'+
+  '<span class="chudo-result__spark chudo-result__spark--a" aria-hidden="true">✦</span>'+
+  '<span class="chudo-result__spark chudo-result__spark--b" aria-hidden="true">✧</span>'+
+  '<span class="chudo-result__spark chudo-result__spark--c" aria-hidden="true">✳</span>'+
+  '<span class="chudo-result__seal" aria-hidden="true"><span>★</span></span>'+
+  '<div class="chudo-result__body">'+
+  '<div class="chudo-result__eyebrow">'+(finished?'ВСЕ ИСПЫТАНИЯ ПРОЙДЕНЫ':'МАЛЕНЬКАЯ ПОБЕДА · '+escapeHtml(THEMES[t.theme]?.name??"ЧУДОЛЁТ"))+'</div>'+
+  '<h4>'+escapeHtml(finished?'Ура! Всё приключение пройдено!':heading)+'</h4>'+
+  '<p>Верно! Отличная работа. '+escapeHtml(finished?'Все задания этого комплекта выполнены!':detail)+'</p>'+
+  '<div class="chudo-result__progress-label"><span>Твои победы</span><strong>'+done+' из '+total+'</strong></div>'+
+  '<div class="chudo-result__progress" role="progressbar" aria-label="Заданий выполнено" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+done+'">'+
+  '<span class="chudo-result__progress-fill" style="width:'+percentage+'%"></span></div>'+
+  (isLast&&!finished?'<small class="chudo-result__last">Можешь выбрать другое задание по номерам сверху.</small>':'')+
+  nextButton+'</div></section>';
+}
+
 function renderNav(){
  $("taskNav").innerHTML=state.bundle.tasks.map((t,i)=>'<button class="task-pill'+(i===state.index?' active':'')+(state.done.has(i)?' done':'')+'" data-task="'+i+'" title="'+escapeHtml(t.title)+'" aria-label="Задание '+(i+1)+'">'+(i+1)+'</button>').join("");
 }
 function renderTask(){
  const t=task(),ready=state.answer!==null;
- let feedback=state.checked==="incomplete"
-  ?'<div class="feedback" role="status">'+(t.kind==="tangram"?"Сначала расставь все геометрические детали.":t.kind==="mathpath"?"Выбери число на каждом шаге дорожки.":t.kind==="shop"?"Сначала выбери ровно "+t.take+" предмета.":t.kind==="puzzle"?"Сначала собери картинку полностью — расставь все фрагменты.":t.kind==="backpack"?"Сначала выбери ровно "+t.count+" предмета для рюкзака.":t.kind==="sudoku"?"Закончите задание полностью для проверки — заполните все пустые клетки.":t.kind==="crossword"?"Заполни все белые клетки кроссворда, затем проверь ответ.":t.kind==="branching"?"Пройди все три развилки, затем проверь результат.":t.kind==="team"?"Соберите все три цифры командного кода, затем проверьте ответ.":"Сначала заполни все буквы или цифры, затем проверим ответ.")+'</div>'
-  :state.checked?'<div class="feedback '+(checkAnswer(t,state.answer)?'good':'')+'" role="status">'+(checkAnswer(t,state.answer)?"✓ Верно! Отличная работа.":"Не совсем. Можно попробовать ещё раз!")+'</div>':'';
- $("activity").innerHTML='<div class="activity-intro"><div><span class="group">'+escapeHtml(CATALOG.find(c=>c.id===t.kind).group)+' · Задание '+(state.index+1)+'</span><h3>'+escapeHtml(t.title)+'</h3></div><span class="status ready">● Можно играть</span></div><p class="prompt">'+promptHTML(t)+'</p><div class="game-board">'+board(t)+'</div><div class="game-actions"><button class="primary" data-action="check" '+(!ready?'disabled':'')+'>✓ Проверить</button><button class="ghost" data-action="reset">↻ Сначала</button><button class="ghost" data-action="hint">? Подсказка</button></div>'+(state.hint?'<div class="answer-hint">'+escapeHtml(hintFor(t))+'</div>':'')+feedback;
+ const success=state.checked===true&&checkAnswer(t,state.answer);
+ const hintText=state.hint===0?"✧ Подсказка":state.hint===1?"✧ Ещё один намёк":"✧ Скрыть подсказки";
+ const hintButton='<button class="ghost chudo-hint-toggle'+(state.hint?' is-open':'')+'" type="button" data-action="hint" aria-expanded="'+(state.hint>0)+'" '+(state.hint?'aria-controls="gameHintCard"':'')+'>'+hintText+'</button>';
+ $("activity").innerHTML='<div class="activity-intro"><div><span class="group">'+escapeHtml(CATALOG.find(c=>c.id===t.kind).group)+' · Задание '+(state.index+1)+'</span><h3>'+escapeHtml(t.title)+'</h3></div><span class="status ready">● Можно играть</span></div><p class="prompt">'+promptHTML(t)+'</p><div class="game-board">'+board(t)+'</div><div class="game-actions"><button class="primary" data-action="check" '+(!ready?'disabled':'')+'>✓ Проверить</button><button class="ghost" data-action="reset">↻ Сначала</button>'+hintButton+'</div>'+(!success?hintCard(t):'')+outcomeCard(t);
  $("taskCounter").textContent="Задание "+(state.index+1)+" из "+state.bundle.tasks.length;
  $("prevBtn").disabled=state.index===0;$("nextBtn").disabled=state.index===state.bundle.tasks.length-1;
  renderNav();
@@ -499,8 +597,9 @@ $("activity").addEventListener("click",event=>{
  if(action==="sort"){state.answer=[...(state.answer||[]),Number(target.dataset.value)];state.checked=false;}
  if(action==="story"){const next=Number(target.dataset.order);if(!(state.answer||[]).includes(next)){state.answer=[...(state.answer||[]),next];state.checked=false;}}
  if(action==="move"){tryMove(Number(target.dataset.cell));return;}
+ if(action==="noticeNext"){if(state.index<state.bundle.tasks.length-1)navigate(state.index+1);return;}
  if(action==="reset"){reset();renderTask();return;}
- if(action==="hint"){state.hint=!state.hint;}
+ if(action==="hint"){state.hint=(state.hint+1)%3;}
  if(action==="check"){
   if(state.answer===null)return;
   if(t.kind==="branching"&&(!Array.isArray(state.answer)||state.answer.length!==3)){state.checked="incomplete";
