@@ -243,12 +243,11 @@ test("Магазин: единственная покупка по сумме и
  assert.doesNotMatch(page,/shop-item selected/);
 });
 
-test("Задания с небольшой библиотекой честно предупреждают о повторном содержании",()=>{
+test("20 историй и 20 смысловых пар не предупреждают о повторах",()=>{
  setup("type:story","7-9",20);
- assert.match(el("validationBadge").textContent,/1 разных из 20/);
- assert.match(el("validationBadge").textContent,/19 повторов/);
+ assert.match(el("validationBadge").textContent,/все 20 задания разные/);
  setup("type:pair","7-9",20);
- assert.match(el("validationBadge").textContent,/8 разных из 20/);
+ assert.match(el("validationBadge").textContent,/все 20 задания разные/);
 });
 test("Полный набор числовых заданий не показывает предупреждение о повторах",()=>{
  setup("type:number","5-6",20);

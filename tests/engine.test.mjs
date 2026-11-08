@@ -507,9 +507,9 @@ test("20 разных фигур подряд воспроизводятся п�
 
 
 test("Аудит 20 заданий: 19 механик не повторяют содержательное условие",()=>{
- const limited=new Set(["shadow","odd","pair","word","syllables","story","cipher"]);
+ const limited=new Set();
  const abundant=READY_IDS.filter(kind=>!limited.has(kind));
- assert.equal(abundant.length,19);
+ assert.equal(abundant.length,26);
  for(const kind of abundant)for(const theme of Object.keys(THEMES))
  for(const age of ["5-6","7-9","10-12"])for(const seed of [11,42,20261107,90531]){
   if(CATALOG.find(x=>x.id===kind).minAge>Number(age.split("-")[0]))continue;
@@ -522,39 +522,33 @@ test("Аудит 20 заданий: 19 механик не повторяют с
  }
 });
 
-test("Ограниченные библиотеки: без ранних повторов и без повторов через 1-2 задания",()=>{
- const kinds=["shadow","odd","pair","cipher"];
- const limit=(kind,theme,age)=>{
-  if(kind==="shadow"||kind==="odd")return new Set([...THEMES[theme].a,...THEMES[theme].b]).size;
-  if(kind==="pair")return 8;
-  const words={clouds:["ПОЧТА","ЗВЕЗДА","ОБЛАКО","КОМПАС","ПОСЫЛКА","СЕКРЕТ","СИГНАЛ"],
-   forest:["ГРИБ","ЛИСА","ПОЛЯНА","РОДНИК","БЕРЁЗА","ТРОПИНКА","ЗАГАДКА"],
-   ocean:["МОРЕ","ВОЛНА","ОСТРОВ","АКУЛА","РАКУШКА","ЖЕМЧУГ"],
-   space:["РАКЕТА","КОСМОС","ОРБИТА","ЗВЕЗДА","ПЛАНЕТА","СПУТНИК"],
-   pirate:["ПИРАТ","КАРТА","СУНДУК","КОМПАС","СОКРОВИЩЕ"],
-   dino:["ЯЙЦО","ЛАПКА","ДОЛИНА","ХВОСТ","ДИНОЗАВР","ЯЩЕРИЦА"]};
-  return words[theme].filter(w=>w.length<=(age==="7-9"?7:10)).length;
- };
- for(const kind of kinds)for(const theme of Object.keys(THEMES))
+
+test("Все 26 готовых механик: двадцать содержательно различных заданий без повторов",()=>{
+ for(const kind of READY_IDS)for(const theme of Object.keys(THEMES))
  for(const age of ["5-6","7-9","10-12"])for(const seed of [3,29,20261107]){
   if(CATALOG.find(x=>x.id===kind).minAge>Number(age.split("-")[0]))continue;
   const tasks=generateBundle({theme,age,count:20,focus:"type:"+kind,seed}).tasks;
-  const keys=tasks.map(contentKey);
-  const capacity=limit(kind,theme,age);
-  assert.equal(new Set(keys.slice(0,capacity)).size,capacity,JSON.stringify({kind,theme,age,seed}));
-  for(let i=0;i<keys.length;i++)for(let gap=1;gap<=3&&i+gap<keys.length;gap++)
-   assert.notEqual(keys[i],keys[i+gap],JSON.stringify({kind,theme,age,seed,i,gap}));
+  assert.equal(tasks.length,20);
+  assert.equal(new Set(tasks.map(contentKey)).size,20,JSON.stringify({kind,theme,age,seed}));
+  assert.ok(tasks.every(validateTask));
  }
 });
-
-test("История по порядку: отмечаем ограничение 1 сюжета, варианты с перестановками не считаем новыми",()=>{
+test("История: 20 сюжетов, порядок по причинно-следственным событиям",()=>{
+ for(const theme of Object.keys(THEMES))for(const seed of [15,42,20261107]){
+  const tasks=generateBundle({theme,age:"7-9",count:20,focus:"type:story",seed}).tasks;
+  assert.equal(new Set(tasks.map(t=>t.storyId)).size,20);
+  assert.ok(tasks.every(t=>checkAnswer(t,[0,1,2,3])));
+  const malformed={...tasks[0],cards:tasks[0].cards.map(x=>({...x,text:"Чужая история"}))};
+  assert.equal(validateTask(malformed),false);
+ }
+});
+test("Пары: 20 отличающихся предметов без повтора из 28 ассоциаций",()=>{
  for(const theme of Object.keys(THEMES)){
-  const tasks=generateBundle({theme,age:"7-9",count:20,focus:"type:story",seed:20261107}).tasks;
-  assert.equal(new Set(tasks.map(contentKey)).size,1);
+  const tasks=generateBundle({theme,age:"7-9",count:20,focus:"type:pair",seed:20261107}).tasks;
+  assert.equal(new Set(tasks.map(t=>t.target)).size,20);
+  assert.ok(tasks.every(t=>t.options.filter(x=>x===t.answer).length===1));
  }
 });
-
-
 test("ART/GAME: собранные ракета, замок и улитка имеют пять уникальных взаимосвязанных деталей",()=>{
  const expectations={
   rocket:["body","nose","left-fin","right-fin","window"],
