@@ -436,3 +436,27 @@ test("Дерево, цветок и аэростат: смысловые 5 ча�
   assert.equal(checkAnswer(t,t.tray),false);
  }
 });
+
+test("Кораблик узнаваем: длинный корпус, мачта, парус, флаг и иллюминатор — пять разных форм",()=>{
+ const expected=["mast","sail","flag","hull","porthole"];
+ let count=0;
+ for(const theme of Object.keys(THEMES))for(const age of ["5-6","7-9","10-12"])for(let seed=0;seed<70;seed++){
+  const task=makeTask("tangram",age,theme,seed,null,"ship");
+  assert.deepEqual(task.parts.map(p=>p.id),expected);
+  assert.ok(task.parts.every(p=>p.shape.startsWith("ship-")));
+  assert.equal(new Set(task.parts.map(p=>p.shape)).size,5);
+  assert.equal(validateTask(task),true);
+  assert.equal(checkAnswer(task,task.answer),true);
+  assert.equal(checkAnswer(task,task.tray),false);
+  const blank=tangramSvg(task,Array(5).fill(null));
+  const solved=tangramSvg(task,task.answer);
+  assert.match(blank,/class="ship-waves"/);
+  assert.equal((blank.match(/class="tangram-slot-number"/g)||[]).length,5);
+  assert.equal((solved.match(/class="tangram-slot-number"/g)||[]).length,5);
+  assert.ok(blank.indexOf('class="ship-waves"')<blank.indexOf('class="tangram-slot-number"'));
+  assert.equal(task.parts.find(p=>p.id==="flag").y,34);
+  assert.equal(task.parts.find(p=>p.id==="sail").x,250);
+  count++;
+ }
+ assert.equal(count,1260);
+});

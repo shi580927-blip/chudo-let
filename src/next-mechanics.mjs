@@ -34,11 +34,13 @@ const COMPOSITIONS=Object.freeze({
   ["feet","robot-feet",200,281,1,"#f0bf91",0]
  ],
  ship:[
-  ["hull","trapezoid",200,260,1.4,"#c5a3ef",180],
-  ["mast","rectangle",200,169,.9,"#f4c57e",0],
-  ["sail","triangle",151,142,1.05,"#aedbe9",0],
-  ["flag","pennant",252,115,.64,"#f9b3a1",90],
-  ["porthole","circle",200,270,.65,"#d9f28d",0]
+  // Парусная лодочка: изогнутый корпус, высокая мачта,
+  // большой наполненный ветром парус, флажок и иллюминатор.
+  ["mast","ship-mast",190,148,1,"#dda879",0],
+  ["sail","ship-sail",250,150,1,"#b5e2fa",0],
+  ["flag","ship-flag",209,34,1,"#ff9e8d",0],
+  ["hull","ship-hull",200,263,1,"#c398e1",0],
+  ["porthole","ship-porthole",249,270,1,"#ffe28e",0]
  ],
  tree:[
   // Узнаваемое дерево: разветвлённый ствол, пышная неровная крона,
@@ -115,6 +117,12 @@ const SHAPES={
  circle:'<circle r="41"/>',
  diamond:'<polygon points="0,-53 44,0 0,53 -44,0"/>',
  trapezoid:'<polygon points="-32,-34 32,-34 53,34 -53,34"/>',
+ // Пять уникальных узнаваемых геометрических силуэтов лодочки.
+ 'ship-mast':'<path d="M-9 -101 H9 L10 96 H-10 Z"/>',
+ 'ship-sail':'<path d="M-48 -90 Q-38 -96 -27 -79 C9 -42 54 22 67 64 Q12 70 -47 68 Z"/>',
+ 'ship-flag':'<path d="M-13 -20 H46 Q44 -12 28 -1 L46 19 H-13 Z"/>',
+ 'ship-hull':'<path d="M-120 -30 Q-124 -27 -114 -12 L-91 28 Q-76 49 -2 50 H69 Q93 48 107 22 L123 -12 Q128 -27 113 -27 H-100 Q-113 -27 -120 -30Z"/>',
+ 'ship-porthole':'<path fill-rule="evenodd" d="M0 -23 A23 23 0 1 1 0 23 A23 23 0 1 1 0 -23 Z M0 -13 A13 13 0 1 0 0 13 A13 13 0 1 0 0 -13 Z"/>',
  // Дерево: крона не круг, а естественная волнистая форма.
  'tree-trunk':'<path d="M-23 -74 Q-23 -85 -11 -86 L-2 -54 L10 -74 Q16 -81 22 -73 L16 -29 L24 58 L43 69 L40 75 L7 70 L-15 75 L-45 70 L-23 58 L-18 -31Z"/>',
  'tree-crown':'<path d="M-84 25 C-105 12 -100 -27 -79 -38 C-80 -65 -47 -79 -22 -67 C0 -90 32 -81 46 -64 C76 -65 94 -43 84 -17 C110 2 94 39 73 48 C67 69 39 77 17 66 C-5 80 -37 68 -47 57 C-68 62 -89 50 -84 25Z"/>',
@@ -155,6 +163,12 @@ export function tangramSvg(task,placed=null,{small=false}={}){
    if(selected)shapes+=shapeItem({...selected,x:part.x,y:part.y,scale:part.scale},selected.color,"#604a85",2);
   }
  }
+ if(task.figure==="ship"){
+  // Вода под лодкой: постоянный декоративный штрих, не игровая деталь.
+  shapes+='<g class="ship-waves" fill="none" stroke="#80cee2" stroke-width="5" stroke-linecap="round">'+
+   '<path d="M102 321 Q126 309 146 320 T191 320"/>'+
+   '<path d="M219 323 Q242 310 265 323 T305 323"/></g>';
+ }
  if(task.figure==="robot"){
   // Дружелюбная мордочка и экран на груди улучшают узнаваемость даже без цвета.
   // Они одинаковы на пустом шаблоне и при любой расстановке, поэтому не выдают ответ.
@@ -172,7 +186,7 @@ export function tangramSvg(task,placed=null,{small=false}={}){
   house:{body:[254,218],roof:[200,90],door:[215,245],window:[165,190],chimney:[260,70]},
   rocket:{body:[200,241],tip:[200,60],window:[200,170]},
   robot:{head:[241,90],body:[243,236],"left-arm":[94,194],"right-arm":[306,194],feet:[200,290]},
-  ship:{hull:[149,271],porthole:[200,270]},
+  ship:{mast:[190,190],sail:[278,163],flag:[224,33],hull:[125,264],porthole:[249,270]},
   tree:{trunk:[199,251],crown:[191,91],branch:[134,159],fruit:[251,128],grass:[197,303]},
   flower:{stem:[200,195],pot:[199,279],petals:[232,67],center:[200,95],leaf:[140,198]},
   balloon:{rig:[174,225],envelope:[249,76],stripe:[199,96],nozzle:[200,194],basket:[200,284]},
@@ -180,9 +194,10 @@ export function tangramSvg(task,placed=null,{small=false}={}){
  };
  if(!small)for(let i=0;i<task.parts.length;i++){
   const part=task.parts[i],position=anchors[task.figure]?.[part.id]??[part.x,part.y];
-  const radius=part.shape==="thin-rectangle"?11:14;
+  const radius=part.shape==="thin-rectangle"?11:part.shape==="ship-mast"?8:part.shape==="ship-porthole"?11:part.shape==="ship-flag"?12:14;
+  const fontSize=radius<12?12:16;
   shapes+='<g class="tangram-slot-number"><circle cx="'+position[0]+'" cy="'+position[1]+'" r="'+radius+'" fill="#fff" stroke="#665097" stroke-width="1.7" opacity=".96"/>'+
-   '<text x="'+position[0]+'" y="'+(position[1]+1)+'" font-size="16" font-weight="900" text-anchor="middle" dominant-baseline="middle" fill="#473278">'+(i+1)+'</text></g>';
+   '<text x="'+position[0]+'" y="'+(position[1]+1)+'" font-size="'+fontSize+'" font-weight="900" text-anchor="middle" dominant-baseline="middle" fill="#473278">'+(i+1)+'</text></g>';
  }
  return '<svg class="tangram-art" viewBox="35 -35 330 370" role="img" aria-label="Геометрическая фигура '+task.figureName+'">'+
   '<rect x="35" y="-35" width="330" height="370" fill="'+(small?"#fff":"#fffef7")+'" rx="14"/>'+
@@ -195,7 +210,8 @@ export function tangramPieceSvg(part){
  const trayLimits={
   "tree-crown":.61,"tree-trunk":.68,"tree-meadow":.58,
   "flower-petals":.59,"flower-stem":.74,
-  "balloon-envelope":.62,"balloon-stripe":.71
+  "balloon-envelope":.62,"balloon-stripe":.71,
+  "ship-mast":.48,"ship-sail":.67,"ship-hull":.47,"ship-flag":1,"ship-porthole":1.05
  };
  const size=Math.min(part.scale,trayLimits[part.shape]??1.15);
  return '<svg viewBox="-66 -68 132 136" role="img" aria-label="Деталь '+part.id+'" class="tangram-piece-art">'+
