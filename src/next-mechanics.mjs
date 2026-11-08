@@ -72,7 +72,11 @@ export function tangramSvg(task,placed=null,{small=false}={}){
  for(let i=0;i<task.parts.length;i++){
   const part=task.parts[i];
   shapes+=shapeItem(part,"#ede6f8","#bcaecf",3);
-  if(done[i]===part.id)shapes+=shapeItem(part,part.color,"#604a85",2);
+  if(done[i]!==null){
+   const selected=task.parts.find(candidate=>candidate.id===done[i]);
+   if(selected)shapes+=shapeItem({...selected,x:part.x,y:part.y,scale:part.scale},selected.color,"#604a85",2);
+  }
+  if(!small)shapes+='<text x="'+(part.x+23)+'" y="'+(part.y-24)+'" font-size="16" fill="#44356d" font-weight="900">'+(i+1)+'</text>';
  }
  return '<svg class="tangram-art" viewBox="35 -35 330 370" role="img" aria-label="Геометрическая фигура '+task.figureName+'">'+
   '<rect x="35" y="-35" width="330" height="370" fill="'+(small?"#fff":"#fffef7")+'" rx="14"/>'+
