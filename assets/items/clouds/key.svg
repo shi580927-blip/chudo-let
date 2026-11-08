@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+<title>Ключ</title>
+<defs><linearGradient id="key-gold" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#fff7d7"/><stop offset=".55" stop-color="#ffc74d"/><stop offset="1" stop-color="#e88b35"/></linearGradient><linearGradient id="key-violet" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#f5e6ff"/><stop offset=".55" stop-color="#a676e7"/><stop offset="1" stop-color="#6a34b8"/></linearGradient><linearGradient id="key-sky" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#f1fdff"/><stop offset=".55" stop-color="#9edbff"/><stop offset="1" stop-color="#36a9cc"/></linearGradient><linearGradient id="key-coral" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffe9c7"/><stop offset=".55" stop-color="#ff8e72"/><stop offset="1" stop-color="#db5464"/></linearGradient><linearGradient id="key-wood" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffe9be"/><stop offset=".55" stop-color="#d6a071"/><stop offset="1" stop-color="#a96f54"/></linearGradient><linearGradient id="key-pearl" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f3efff"/><stop offset="1" stop-color="#c5b7df"/></linearGradient></defs>
+<g stroke-linejoin="round" stroke-linecap="round">
+ <g transform="rotate(-31 64 64)">
+ <circle cx="42" cy="53" r="24" fill="url(#key-gold)" stroke="#8c6384" stroke-width="3.5"/>
+ <circle cx="42" cy="53" r="11" fill="#f7effe" stroke="#9c7c8b" stroke-width="2"/>
+ <path d="M61 53H111V66H99V80H86V67H61Z" fill="url(#key-gold)" stroke="#8c6384" stroke-width="3.6"/>
+ <path d="M68 57H104" stroke="white" stroke-width="4" opacity=".5"/>
+ </g></g>
+</svg>

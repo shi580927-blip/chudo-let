@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ЧУДОЛЁТ — 20 фигур-конструкторов · ART-проверка</title>
+<style>
+:root{font-family:"Nunito","Golos Text",system-ui,sans-serif;color:#37284f;background:#f7f4fc}
+*{box-sizing:border-box}body{margin:0;padding:24px 15px 50px}
+header{max-width:1250px;margin:auto auto 24px}
+h1{margin:0 0 9px;font-size:clamp(25px,3vw,39px);color:#6a34b8}
+header p{max-width:810px;line-height:1.45;color:#665c7b}
+.summary{font-size:14px;color:#775b9d;background:#fdf5dc;border-radius:12px;padding:10px 14px;max-width:970px}
+.gallery{max-width:1250px;margin:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{background:#fff;border-radius:20px;border:1px solid #e0d5f0;box-shadow:0 5px 24px #482c6e0a;padding:15px}
+.card h2{margin:0 0 12px;color:#513584;font-size:19px}
+.number{color:#926bba}
+.art{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.panel{background:#fffdf4;border:1px solid #e9dcee;border-radius:12px;padding:7px;min-width:0}
+.panel svg{width:100%;height:auto;max-height:290px}
+.panel>span{font-size:12px;display:block;text-align:center;color:#7d688d;padding:5px}
+.tray{display:flex;justify-content:center;align-items:center;gap:5px;flex-wrap:wrap;padding:7px 2px 0}
+.tray .piece{width:51px;height:51px;border:1px dashed #b9a5d5;border-radius:9px;background:#faf8ff;padding:2px}
+.tray svg{width:100%;height:100%}
+.note{font-size:12px;color:#75668b;margin-top:6px}
+@media(max-width:720px){.gallery{grid-template-columns:1fr}.card{padding:12px}.art{gap:6px}.panel{padding:4px}}
+@media print{body{padding:0;background:#fff}.gallery{grid-template-columns:repeat(2,1fr);gap:8mm}.card{box-shadow:none;break-inside:avoid;border:1px solid #bbb}header{padding:0 6mm} .panel{background:#fff}.gallery{margin:0 4mm}}
+</style>
+</head>
+<body>
+<header>
+<h1>ЧУДОЛЁТ · 20 фигур-конструкторов</h1>
+<p>Лист для визуальной ART-проверки. Слева — пустая схема с номерами, справа — собранный образец. Под ними — пять отдельных деталей. Робот и кораблик сохранены из ранее принятых версий.</p>
+<div class="summary">Статус: программно проверено. Художественная приёмка и пробная печать А4 — отдельно. Эта галерея не является готовым игровым товаром.</div>
+</header>
+<main id="gallery" class="gallery" aria-label="Галерея двадцати фигур"></main>
+<script type="module">
+import {FIGURE_IDS,makeTangram,tangramSvg,tangramPieceSvg} from "../src/next-mechanics.mjs";
+const root=document.getElementById("gallery");
+for(const [index,id] of FIGURE_IDS.entries()){
+ const rng=()=>0.37;
+ const task=makeTangram(5,rng,id);
+ const card=document.createElement("article");
+ card.className="card";
+ const heading=document.createElement("h2");
+ heading.textContent=(index+1)+". "+task.figureName;
+ card.append(heading);
+ const art=document.createElement("div");art.className="art";
+ for(const [label,placed] of [["Схема без ответа",Array(5).fill(null)],["Собранная фигура",task.answer]]){
+  const panel=document.createElement("div");panel.className="panel";
+  // SVG состоит исключительно из собственных неизменяемых заранее заданных форм.
+  panel.innerHTML=tangramSvg(task,placed);
+  const name=document.createElement("span");name.textContent=label;panel.append(name);art.append(panel);
+ }
+ card.append(art);
+ const tray=document.createElement("div");tray.className="tray";
+ for(const item of task.tray){
+  const tile=document.createElement("div");tile.className="piece";
+  tile.innerHTML=tangramPieceSvg(task.parts.find(p=>p.id===item));
+  tray.append(tile);
+ }
+ card.append(tray);
+ const foot=document.createElement("div");foot.className="note";
+ foot.textContent="Пять разных деталей · один правильный вариант";
+ card.append(foot);root.append(card);
+}
+</script>
+</body>
+</html>

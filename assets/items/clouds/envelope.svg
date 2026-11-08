@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+<title>Письмо</title>
+<defs><linearGradient id="envelope-gold" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#fff7d7"/><stop offset=".55" stop-color="#ffc74d"/><stop offset="1" stop-color="#e88b35"/></linearGradient><linearGradient id="envelope-violet" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#f5e6ff"/><stop offset=".55" stop-color="#a676e7"/><stop offset="1" stop-color="#6a34b8"/></linearGradient><linearGradient id="envelope-sky" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#f1fdff"/><stop offset=".55" stop-color="#9edbff"/><stop offset="1" stop-color="#36a9cc"/></linearGradient><linearGradient id="envelope-coral" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffe9c7"/><stop offset=".55" stop-color="#ff8e72"/><stop offset="1" stop-color="#db5464"/></linearGradient><linearGradient id="envelope-wood" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffe9be"/><stop offset=".55" stop-color="#d6a071"/><stop offset="1" stop-color="#a96f54"/></linearGradient><linearGradient id="envelope-pearl" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f3efff"/><stop offset="1" stop-color="#c5b7df"/></linearGradient></defs>
+<g stroke-linejoin="round" stroke-linecap="round">
+ <g transform="rotate(-8 64 64)">
+ <rect x="16" y="37" width="96" height="64" rx="11" fill="url(#envelope-pearl)" stroke="#765d93" stroke-width="3.6"/>
+ <path d="M19 47L61 78Q64 80 67 78L109 47" fill="#f7edff" stroke="#765d93" stroke-width="3.3"/>
+ <path d="M18 94L50 67M110 94L78 67" fill="none" stroke="#a495c6" stroke-width="2.4"/>
+ <path d="M25 40H99" stroke="white" stroke-width="3.2" opacity=".65"/>
+ <circle cx="64" cy="73" r="12.5" fill="url(#envelope-gold)" stroke="#a37a45" stroke-width="2.2"/>
+ <path d="M64 63L67 70L74 72L69 78L70 85L63 82L57 85L58 77L53 72L60 70Z" fill="#fff0ae" opacity=".82"/>
+ </g></g>
+</svg>
