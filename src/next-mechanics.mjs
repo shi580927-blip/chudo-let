@@ -190,8 +190,16 @@ export function tangramSvg(task,placed=null,{small=false}={}){
 }
 export function tangramPieceSvg(part){
  const fill=part.color,shape=SHAPES[part.shape];
+ // Изящные кроны, лепестки и оболочки аэростата крупнее прежних
+ // условных фигур; уменьшаем только миниатюры в лотке, не игровую схему.
+ const trayLimits={
+  "tree-crown":.61,"tree-trunk":.68,"tree-meadow":.58,
+  "flower-petals":.59,"flower-stem":.74,
+  "balloon-envelope":.62,"balloon-stripe":.71
+ };
+ const size=Math.min(part.scale,trayLimits[part.shape]??1.15);
  return '<svg viewBox="-66 -68 132 136" role="img" aria-label="Деталь '+part.id+'" class="tangram-piece-art">'+
-  '<g transform="rotate('+part.rotate+') scale('+Math.min(part.scale,1.15)+')" fill="'+fill+'" stroke="#664c88" stroke-width="3" stroke-linejoin="round">'+shape+'</g></svg>';
+  '<g transform="rotate('+part.rotate+') scale('+size+')" fill="'+fill+'" stroke="#664c88" stroke-width="3" stroke-linejoin="round">'+shape+'</g></svg>';
 }
 export function makeMathPath(age,r){
  const limit=age>=10?90:age>=7?50:20;
