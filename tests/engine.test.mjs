@@ -373,3 +373,24 @@ test("Космический рюкзак: галактика/Млечный П�
  assert.equal(sawGalaxy,true);
  assert.equal(sawPlanet,true);
 });
+
+test("Геометрический конструктор: восемь разных силуэтов, уникальные контуры и номера внутри SVG",()=>{
+ const figures=new Set();
+ for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(let seed=0;seed<90;seed++){
+  const task=makeTask("tangram",age,theme,seed);
+  assert.equal(validateTask(task),true);
+  assert.equal(new Set(task.parts.map(p=>p.shape)).size,5);
+  assert.equal(checkAnswer(task,task.answer),true);
+  figures.add(task.figure);
+ }
+ assert.equal(figures.size,8);
+});
+test("Конструктор: до исчерпания 8 силуэтов не повторяются, близких повторов нет",()=>{
+ for(const age of ["5-6","7-9","10-12"])for(const theme of Object.keys(THEMES))for(let seed=0;seed<45;seed++){
+  const b=generateBundle({age,theme,focus:"type:tangram",count:20,seed});
+  const f=b.tasks.map(t=>t.figure);
+  assert.equal(new Set(f.slice(0,8)).size,8);
+  for(let i=0;i<f.length;i++)for(let gap=1;gap<=3&&i+gap<f.length;gap++)assert.notEqual(f[i],f[i+gap]);
+  assert.ok(b.tasks.every(validateTask));
+ }
+});

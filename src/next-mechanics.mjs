@@ -7,25 +7,27 @@ const shuffled=(values,r)=>{
  return a;
 };
 const same=(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((x,i)=>x===b[i]);
+// Каждый силуэт состоит из ПЯТИ отличающихся по форме деталей.
+// Никакого угадывания по цвету: в пределах задания контуры уникальны.
 const COMPOSITIONS=Object.freeze({
  house:[
   ["body","square",200,195,1.75,"#d7bafa",0],
   ["roof","triangle",200,86,1.65,"#ffbe64",0],
   ["door","rectangle",215,243,.62,"#a9daed",0],
   ["window","circle",165,190,.65,"#f9e58c",0],
-  ["chimney","rectangle",260,70,.65,"#edaaa7",0]
+  ["chimney","thin-rectangle",260,70,.8,"#edaaa7",0]
  ],
  rocket:[
   ["body","rectangle",200,180,1.4,"#bfa0f7",0],
   ["tip","triangle",200,60,1.15,"#ffca72",0],
   ["window","circle",200,170,.76,"#9edbff",0],
-  ["left-fin","triangle",116,248,.76,"#f3aca2",-90],
-  ["right-fin","triangle",284,248,.76,"#a4e5c1",90]
+  ["left-fin","trapezoid",116,248,.76,"#f3aca2",-90],
+  ["right-fin","diamond",284,248,.68,"#a4e5c1",90]
  ],
  robot:[
   ["body","square",200,202,1.55,"#b5d6f6",0],
-  ["head","square",200,78,.95,"#ffdb94",0],
-  ["eye","circle",200,78,.5,"#aa83d5",0],
+  ["head","rounded-square",200,78,.95,"#ffdb94",0],
+  ["eye","circle",230,78,.45,"#aa83d5",0],
   ["arm","rectangle",110,202,.83,"#f2b3b4",0],
   ["antenna","diamond",200,21,.5,"#9ddbba",0]
  ],
@@ -33,14 +35,47 @@ const COMPOSITIONS=Object.freeze({
   ["hull","trapezoid",200,260,1.4,"#c5a3ef",180],
   ["mast","rectangle",200,169,.9,"#f4c57e",0],
   ["sail","triangle",151,142,1.05,"#aedbe9",0],
-  ["flag","triangle",252,115,.64,"#f9b3a1",90],
+  ["flag","pennant",252,115,.64,"#f9b3a1",90],
   ["porthole","circle",200,270,.65,"#d9f28d",0]
+ ],
+ tree:[
+  ["trunk","rectangle",200,241,1.05,"#d6b48a",0],
+  ["crown","circle",200,110,1.4,"#a9dfb4",0],
+  ["branch","triangle",136,173,.67,"#b6d79b",-90],
+  ["berry","diamond",250,110,.48,"#f3a2a3",0],
+  ["grass","trapezoid",200,307,.8,"#a4dca9",0]
+ ],
+ flower:[
+  ["pot","trapezoid",200,270,1.1,"#e5b29e",0],
+  ["stem","thin-rectangle",200,190,1.05,"#9dcfa7",0],
+  ["blossom","circle",200,98,1.08,"#ffe39d",0],
+  ["leaf","diamond",138,198,.72,"#a6daa9",0],
+  ["petal","triangle",261,125,.65,"#d4b4ec",0]
+ ],
+ balloon:[
+  ["balloon","circle",200,104,1.45,"#edb6e5",0],
+  ["basket","square",200,276,.72,"#c7a889",0],
+  ["rope","thin-rectangle",200,219,.85,"#dbc2b7",0],
+  ["bow","diamond",279,165,.48,"#f8d37d",0],
+  ["ribbon","pennant",118,161,.60,"#c1dff5",90]
+ ],
+ castle:[
+  ["wall","square",200,224,1.45,"#d5c0f4",0],
+  ["tower","rectangle",122,186,1.07,"#b7d4f3",0],
+  ["roof","triangle",122,104,.96,"#f6be83",0],
+  ["gate","rounded-square",220,263,.57,"#dbc4ae",0],
+  ["flag","pennant",267,97,.65,"#e9b3c3",90]
  ]
 });
-const CONSTRUCTION_NAMES={house:"Домик",rocket:"Ракета",robot:"Робот",ship:"Кораблик"};
+const CONSTRUCTION_NAMES={
+ house:"Домик",rocket:"Ракета",robot:"Робот",ship:"Кораблик",
+ tree:"Дерево",flower:"Цветок",balloon:"Воздушный шар",castle:"Замок"
+};
+export const FIGURE_IDS=Object.freeze(Object.keys(COMPOSITIONS));
 function blueprint(id){return COMPOSITIONS[id]?.map(([id,shape,x,y,scale,color,rotate])=>({id,shape,x,y,scale,color,rotate}));}
-export function makeTangram(age,r){
- const ids=Object.keys(COMPOSITIONS),figure=ids[choose(r,ids.length)],parts=blueprint(figure);
+export function makeTangram(age,r,selectedFigure=null){
+ const figure=selectedFigure??FIGURE_IDS[choose(r,FIGURE_IDS.length)],parts=blueprint(figure);
+ if(!parts)throw new Error("Неизвестная фигура конструктора");
  const answer=parts.map(p=>p.id),tray=shuffled(answer,r);
  if(same(tray,answer))tray.reverse();
  return {figure,figureName:CONSTRUCTION_NAMES[figure],parts,tray,answer};
@@ -51,13 +86,17 @@ export function validateTangram(task){
  if(task.figureName!==CONSTRUCTION_NAMES[task.figure])return false;
  if(JSON.stringify(task.parts)!==JSON.stringify(base))return false;
  const ids=base.map(p=>p.id);
- return same(task.answer,ids)&&same(task.tray.slice().sort(),ids.slice().sort())&&!same(task.tray,ids);
+ return new Set(base.map(p=>p.shape)).size===5&&
+  same(task.answer,ids)&&same(task.tray.slice().sort(),ids.slice().sort())&&!same(task.tray,ids);
 }
 export function checkTangram(task,answer){return same(answer,task.answer);}
 
 const SHAPES={
  square:'<rect x="-40" y="-40" width="80" height="80" rx="4"/>',
  rectangle:'<rect x="-29" y="-50" width="58" height="100" rx="4"/>',
+ 'thin-rectangle':'<rect x="-13" y="-50" width="26" height="100" rx="3"/>',
+ 'rounded-square':'<rect x="-40" y="-40" width="80" height="80" rx="23"/>',
+ pennant:'<polygon points="-47,-34 44,-34 21,0 44,34 -47,34"/>',
  triangle:'<polygon points="0,-50 49,41 -49,41"/>',
  circle:'<circle r="41"/>',
  diamond:'<polygon points="0,-53 44,0 0,53 -44,0"/>',
@@ -76,7 +115,23 @@ export function tangramSvg(task,placed=null,{small=false}={}){
    const selected=task.parts.find(candidate=>candidate.id===done[i]);
    if(selected)shapes+=shapeItem({...selected,x:part.x,y:part.y,scale:part.scale},selected.color,"#604a85",2);
   }
-  if(!small)shapes+='<text x="'+(part.x+23)+'" y="'+(part.y-24)+'" font-size="16" fill="#44356d" font-weight="900">'+(i+1)+'</text>';
+ }
+ // Метки находятся ВНУТРИ контуров и прорисовываются поверх любой поставленной детали.
+ const anchors={
+  house:{body:[254,218],roof:[200,90],door:[215,245],window:[165,190],chimney:[260,70]},
+  rocket:{body:[200,241],tip:[200,60],window:[200,170]},
+  robot:{body:[200,244],head:[172,78],eye:[230,78]},
+  ship:{hull:[149,271],porthole:[200,270]},
+  tree:{crown:[199,102]},
+  flower:{blossom:[200,97]},
+  balloon:{balloon:[200,104]},
+  castle:{wall:[258,220],gate:[220,263]}
+ };
+ if(!small)for(let i=0;i<task.parts.length;i++){
+  const part=task.parts[i],position=anchors[task.figure]?.[part.id]??[part.x,part.y];
+  const radius=part.shape==="thin-rectangle"?11:14;
+  shapes+='<g class="tangram-slot-number"><circle cx="'+position[0]+'" cy="'+position[1]+'" r="'+radius+'" fill="#fff" stroke="#665097" stroke-width="1.7" opacity=".96"/>'+
+   '<text x="'+position[0]+'" y="'+(position[1]+1)+'" font-size="16" font-weight="900" text-anchor="middle" dominant-baseline="middle" fill="#473278">'+(i+1)+'</text></g>';
  }
  return '<svg class="tangram-art" viewBox="35 -35 330 370" role="img" aria-label="Геометрическая фигура '+task.figureName+'">'+
   '<rect x="35" y="-35" width="330" height="370" fill="'+(small?"#fff":"#fffef7")+'" rx="14"/>'+
