@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#fff9f0">
+<meta name="description" content="ЧУДОЛЁТ — редакторская QA-галерея 30 игровых механик по 20 заданий с записью замечаний.">
+<title>ЧУДОЛЁТ — QA-галерея 30 × 20</title>
+<link rel="stylesheet" href="../assets/qa-gallery.css">
+</head>
+<body>
+<header class="qa-top">
+ <div class="qa-top__inner">
+  <a class="qa-logo" href="../index.html" aria-label="На главную ЧУДОЛЁТА"><img src="../assets/brand/chudolet-horizontal.png" alt="ЧУДОЛЁТ" width="2172" height="724" decoding="async"></a>
+  <div class="qa-top__brand"><span>ЛАБОРАТОРИЯ КАЧЕСТВА</span><strong>Редакторская проверка заданий</strong></div>
+  <a class="qa-back" href="../index.html"><span aria-hidden="true">←</span> Конструктор</a>
+ </div>
+</header>
+<main class="qa-shell">
+ <section class="qa-hero" aria-labelledby="pageTitle">
+  <div class="qa-hero__text">
+   <div class="qa-overline">GAME · ART · PRINT · UX</div>
+   <h1 id="pageTitle">Проверяем каждое <em>приключение</em></h1>
+   <p>Открой все 20 вариантов любой из 30 механик, посмотри настоящее игровое задание и отметь, что исправить. Точные настройки позволяют воспроизвести любой вариант.</p>
+  </div>
+  <div class="qa-hero__metrics">
+   <div><strong id="qaMetricTypes">30</strong><small>видов заданий</small></div>
+   <div><strong id="qaMetricTasks">600</strong><small>заданий в подборке</small></div>
+   <div><strong id="qaMetricIssues">0</strong><small>замечаний</small></div>
+  </div>
+ </section>
+ <section class="qa-toolbar" aria-label="Параметры просмотра">
+  <div class="qa-toolbar__heading">
+   <div><span class="qa-overline">01 · СОБРАТЬ ГАЛЕРЕЮ</span><h2>Параметры проверки</h2></div>
+   <p>Выбирай тему, возраст и тип — остальные варианты соберём сами.</p>
+  </div>
+  <form id="qaFilters" class="qa-form">
+   <label>Мир приключения
+    <select id="qaTheme" name="theme">
+     <option value="clouds">☁️ Облачная почта</option><option value="forest">🌳 Волшебный лес</option><option value="ocean">🐚 Подводное царство</option>
+     <option value="space">🚀 Космическая экспедиция</option><option value="pirate">🏴‍☠️ Пиратское приключение</option><option value="dino">🦕 Долина динозавров</option>
+    </select>
+   </label>
+   <label>Возраст
+    <select id="qaAge" name="age">
+     <option value="3-4">3–4 года</option><option value="5-6">5–6 лет</option><option value="7-9">7–9 лет</option><option value="10-12" selected>10–12 лет</option>
+    </select>
+   </label>
+   <label>Направление
+    <select id="qaGroup" name="group">
+     <option value="all">Все направления</option><option value="Внимание">Внимание</option><option value="Логика">Логика</option>
+     <option value="Пространство">Пространство</option><option value="Математика">Математика</option><option value="Речь">Речь</option><option value="Приключения">Приключения</option>
+    </select>
+   </label>
+   <label>Механика
+    <select id="qaKind" name="kind"><option value="all">Все 30 механик</option></select>
+   </label>
+   <label>Этап проверки
+    <select id="qaStatus" name="status">
+     <option value="all">Все статусы</option><option value="new">Не проверено</option><option value="issue">Нужна правка</option><option value="pass">Без замечаний</option>
+    </select>
+   </label>
+   <label>Номер варианта
+    <input id="qaSeed" name="seed" type="number" min="1" max="999999999" step="1" value="20261107" inputmode="numeric">
+   </label>
+   <label class="qa-form__search">Поиск механики
+    <input id="qaSearch" name="search" type="search" placeholder="Например, лабиринт или судоку" autocomplete="off">
+   </label>
+   <button class="qa-button qa-button--main" type="submit">✦ Показать задания</button>
+  </form>
+  <div class="qa-tools">
+   <button type="button" class="qa-button qa-button--quiet" id="qaOpenAll">Развернуть все варианты</button>
+   <button type="button" class="qa-button qa-button--quiet" id="qaCloseAll">Свернуть группы</button>
+   <button type="button" class="qa-button qa-button--download" id="qaExport">⇩ Скачать замечания · JSON</button>
+   <button type="button" class="qa-button qa-button--quiet" id="qaImportTrigger">⇧ Загрузить предыдущий отчёт</button>
+   <input id="qaImport" type="file" accept="application/json,.json" hidden>
+  </div>
+  <p class="qa-privacy"><span aria-hidden="true">◈</span> Замечания хранятся только в этом браузере, а не на сервере. После проверки обязательно скачай JSON — он понадобится для переноса на другой компьютер или передачи в разработку. При импорте прежние записи не удаляются и не перезаписываются.</p>
+ </section>
+ <section class="qa-overview" aria-label="Состояние проверки">
+  <div class="qa-overview__title"><span class="qa-overline">02 · ПРОВЕРКА ИГР</span><h2>Каталог вариантов</h2><p id="qaSummary" role="status" aria-live="polite">Подготавливаем список механик…</p></div>
+  <div class="qa-overview__stats">
+   <div><strong id="qaCountNew">0</strong><span>Не проверено</span></div>
+   <div><strong id="qaCountPass">0</strong><span>Без замечаний</span></div>
+   <div><strong id="qaCountIssue">0</strong><span>Нужна правка</span></div>
+  </div>
+ </section>
+ <div id="qaGroups" class="qa-groups" aria-live="off"></div>
+ <div id="qaEmpty" class="qa-empty" hidden>Для выбранных фильтров заданий не найдено. Попробуй изменить возраст, тип или статус.</div>
+</main>
+<dialog id="qaDialog" class="qa-dialog" aria-labelledby="qaDialogTitle">
+ <div class="qa-dialog__head">
+  <div><span class="qa-overline" id="qaDialogMeta">РЕДАКТОРСКАЯ ПРОВЕРКА</span><h2 id="qaDialogTitle">Задание</h2></div>
+  <button type="button" class="qa-dialog__close" id="qaClose" aria-label="Закрыть карточку">×</button>
+ </div>
+ <div class="qa-dialog__toolbar">
+  <button type="button" class="qa-button qa-button--quiet" id="qaPrev">← Предыдущее</button>
+  <span id="qaCurrentStep">Задание 1 из 20</span>
+  <button type="button" class="qa-button qa-button--quiet" id="qaNext">Следующее →</button>
+ </div>
+ <div class="qa-dialog__layout">
+  <div class="qa-play">
+   <div class="qa-play__head"><strong>Настоящее игровое задание</strong><a id="qaOpenGame" target="_blank" rel="noopener noreferrer">Открыть на весь экран ↗</a></div>
+   <iframe id="qaFrame" title="Игровая версия проверяемого задания" loading="lazy"></iframe>
+   <p class="qa-play__note">Здесь работает тот же конструктор, что и на главной странице. Попробуй пройти задание, получить подсказку и проверить ответ.</p>
+  </div>
+  <aside class="qa-inspector">
+   <div class="qa-inspector__top">
+    <h3>Карточка качества</h3>
+    <p id="qaFingerprint" class="qa-fingerprint"></p>
+   </div>
+   <details class="qa-answer">
+    <summary>Ответ для проверки <span aria-hidden="true">⌄</span></summary>
+    <div id="qaAnswerText" class="qa-answer__text"></div>
+   </details>
+   <form id="qaReviewForm" class="qa-review-form">
+    <fieldset class="qa-fieldset">
+     <legend>Результат проверки</legend>
+     <label><input type="radio" name="qaVerdict" value="new" checked> Ещё не проверено</label>
+     <label><input type="radio" name="qaVerdict" value="pass"> ✓ Без замечаний</label>
+     <label><input type="radio" name="qaVerdict" value="issue"> ✎ Нужна правка</label>
+    </fieldset>
+    <fieldset class="qa-fieldset">
+     <legend>Что требует внимания?</legend>
+     <div class="qa-tag-grid">
+      <label><input type="checkbox" name="qaTag" value="GAME"> GAME · логика</label>
+      <label><input type="checkbox" name="qaTag" value="ART"> ART · рисунок</label>
+      <label><input type="checkbox" name="qaTag" value="PRINT"> PRINT · печать</label>
+      <label><input type="checkbox" name="qaTag" value="UX"> UX · удобство</label>
+      <label><input type="checkbox" name="qaTag" value="TEXT"> Текст и возраст</label>
+     </div>
+    </fieldset>
+    <label class="qa-note-label">Замечание / рекомендация
+     <textarea id="qaNote" rows="5" maxlength="3000" placeholder="Например: в варианте №12 подсказка раскрывает ответ; размер картинки мелкий…"></textarea>
+    </label>
+    <button type="submit" class="qa-button qa-button--main qa-save">Сохранить отметку</button>
+    <p id="qaSaveMessage" role="status" aria-live="polite"></p>
+   </form>
+  </aside>
+ </div>
+</dialog>
+<footer class="qa-footer">ЧУДОЛЁТ · Внутренняя лаборатория качества · GAME → ART → PRINT · Версия v0.2</footer>
+<script type="module" src="../src/qa-gallery.mjs"></script>
+</body>
+</html>
