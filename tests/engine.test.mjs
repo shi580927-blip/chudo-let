@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer,countSudokuSolutions,validSudokuSolution,traceMap,validateCrossword} from "../src/engine.mjs";
+import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,countMazeRoutes,neighbors,checkAnswer,countSudokuSolutions,validSudokuSolution,traceMap,validateCrossword,contentKey} from "../src/engine.mjs";
 import {WORD_BANK} from "../src/words.mjs";
 import {shopSolutions,tangramSvg,tangramPieceSvg,FIGURE_IDS} from "../src/next-mechanics.mjs";
 import {backpackSolutions,mirrorRight} from "../src/spatial.mjs";
@@ -503,4 +503,53 @@ test("20 разных фигур подряд воспроизводятся п�
   verified++;
  }
  assert.equal(verified,1440);
+});
+
+
+test("Аудит 20 заданий: 19 механик не повторяют содержательное условие",()=>{
+ const limited=new Set(["shadow","odd","pair","word","syllables","story","cipher"]);
+ const abundant=READY_IDS.filter(kind=>!limited.has(kind));
+ assert.equal(abundant.length,19);
+ for(const kind of abundant)for(const theme of Object.keys(THEMES))
+ for(const age of ["5-6","7-9","10-12"])for(const seed of [11,42,20261107,90531]){
+  if(CATALOG.find(x=>x.id===kind).minAge>Number(age.split("-")[0]))continue;
+  const bundle=generateBundle({kind,theme,age,count:20,focus:"type:"+kind,seed});
+  const keys=bundle.tasks.map(contentKey);
+  assert.equal(bundle.tasks.length,20);
+  assert.equal(new Set(keys).size,20,JSON.stringify({kind,theme,age,seed,keys}));
+  assert.ok(bundle.tasks.every(validateTask));
+  assert.deepEqual(bundle.tasks,generateBundle({kind,theme,age,count:20,focus:"type:"+kind,seed}).tasks);
+ }
+});
+
+test("Ограниченные библиотеки: без ранних повторов и без повторов через 1-2 задания",()=>{
+ const kinds=["shadow","odd","pair","cipher"];
+ const limit=(kind,theme,age)=>{
+  if(kind==="shadow"||kind==="odd")return new Set([...THEMES[theme].a,...THEMES[theme].b]).size;
+  if(kind==="pair")return 8;
+  const words={clouds:["ПОЧТА","ЗВЕЗДА","ОБЛАКО","КОМПАС","ПОСЫЛКА","СЕКРЕТ","СИГНАЛ"],
+   forest:["ГРИБ","ЛИСА","ПОЛЯНА","РОДНИК","БЕРЁЗА","ТРОПИНКА","ЗАГАДКА"],
+   ocean:["МОРЕ","ВОЛНА","ОСТРОВ","АКУЛА","РАКУШКА","ЖЕМЧУГ"],
+   space:["РАКЕТА","КОСМОС","ОРБИТА","ЗВЕЗДА","ПЛАНЕТА","СПУТНИК"],
+   pirate:["ПИРАТ","КАРТА","СУНДУК","КОМПАС","СОКРОВИЩЕ"],
+   dino:["ЯЙЦО","ЛАПКА","ДОЛИНА","ХВОСТ","ДИНОЗАВР","ЯЩЕРИЦА"]};
+  return words[theme].filter(w=>w.length<=(age==="7-9"?7:10)).length;
+ };
+ for(const kind of kinds)for(const theme of Object.keys(THEMES))
+ for(const age of ["5-6","7-9","10-12"])for(const seed of [3,29,20261107]){
+  if(CATALOG.find(x=>x.id===kind).minAge>Number(age.split("-")[0]))continue;
+  const tasks=generateBundle({theme,age,count:20,focus:"type:"+kind,seed}).tasks;
+  const keys=tasks.map(contentKey);
+  const capacity=limit(kind,theme,age);
+  assert.equal(new Set(keys.slice(0,capacity)).size,capacity,JSON.stringify({kind,theme,age,seed}));
+  for(let i=0;i<keys.length;i++)for(let gap=1;gap<=3&&i+gap<keys.length;gap++)
+   assert.notEqual(keys[i],keys[i+gap],JSON.stringify({kind,theme,age,seed,i,gap}));
+ }
+});
+
+test("История по порядку: отмечаем ограничение 1 сюжета, варианты с перестановками не считаем новыми",()=>{
+ for(const theme of Object.keys(THEMES)){
+  const tasks=generateBundle({theme,age:"7-9",count:20,focus:"type:story",seed:20261107}).tasks;
+  assert.equal(new Set(tasks.map(contentKey)).size,1);
+ }
 });
