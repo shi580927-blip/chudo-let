@@ -589,13 +589,50 @@ export function solutionText(t){
  if(t.kind==="shadow"||t.kind==="pair"||t.kind==="sequence")return t.answer;
  return String(t.answer);
 }
+// Ключ именно СОДЕРЖАНИЯ, без номера варианта и перестановки вариантов ответа.
+// Нужен для контроля повторов в комплекте, а не для проверки решения.
+export function contentKey(t){
+ switch(t.kind){
+  case "find":case "count":return t.target+"|"+t.answer;
+  case "shadow":case "odd":return t.kind==="shadow"?t.target:t.cells[t.answer];
+  case "pair":return t.target+"|"+t.answer;
+  case "cipher":case "word":case "syllables":return t.answer;
+  case "story":return t.cards.slice().sort((a,b)=>a.order-b.order).map(c=>c.text).join("|");
+  case "tangram":return t.figure;
+  case "number":return String(t.value);
+  case "sequence":return t.shown.join("|");
+  case "sort":return t.items.map(x=>x.icon+":"+x.group).sort().join("|");
+  case "compare":return t.left+"|"+t.right+"|"+t.icon;
+  case "crossword":return t.entries.map(x=>x.word+":"+x.orientation).sort().join("|");
+  case "table":return t.rows.join("|")+"#"+t.columns.join("|")+"#"+t.missing.join("|");
+  case "puzzle":return t.scene.symbols.join("|");
+  case "memory":return t.base.join("|")+"#"+t.position;
+  case "sudoku":return t.symbols.join("|")+"#"+t.grid.map(x=>x===null?"_":x).join("|");
+  case "map":return t.start+"#"+t.directions.join("|")+"#"+t.icons.join("|");
+  case "symmetry":return t.left.join("|");
+  case "backpack":return t.items.map(x=>x.icon+":"+x.weight+":"+x.group+":"+x.stamp).sort().join("|")+"#"+t.totalWeight+"#"+t.fromFirst;
+  case "shop":return t.items.map(x=>x.icon+":"+x.price).sort().join("|")+"#"+t.budget;
+  case "mathpath":return t.start+"#"+t.steps.map(x=>x.op+x.amount).join("|");
+  case "differences":return t.base.join("|")+"#"+t.changed.join("|");
+  case "maze":return t.edges.map(x=>x.join(":")).join("|");
+  default:return JSON.stringify(t);
+ }
+}
+function finiteVariety(kind,theme,age){
+ const t=THEMES[theme]??THEMES.clouds;
+ if(kind==="shadow"||kind==="odd")return new Set([...t.a,...t.b]).size;
+ if(kind==="pair")return 8;
+ if(kind==="cipher")return (CIPHER_WORDS[theme]??CIPHER_WORDS.clouds).filter(x=>x.length<=(age<=5?6:age<=7?7:10)).length;
+ if(kind==="story")return 1;
+ return null;
+}
 export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,focus="mixed"}={}){
  count=Math.max(1,Math.min(20,Number(count)||7));
  const eligible=(ids)=>ids.filter(id=>CATALOG.find(c=>c.id===id).minAge<=resolveAge(age));
  const candidates=focus.startsWith("type:")?[focus.slice(5)]:focus==="logic"?["shadow","differences","memory","odd","sequence","sort","pair","table","sudoku","maze","map","compare","number","cipher","crossword","puzzle","symmetry","tangram","mathpath","shop"]:focus==="story"?["find","sort","sequence","maze","map","count","pair","story","cipher","word","syllables","crossword","puzzle","backpack","tangram","mathpath","shop"]:READY_IDS;
  const pool=eligible(candidates);
  if(pool.length===0)throw new Error("Эта механика пока не подходит выбранному возрасту.");
- const r=seeded(seed),tasks=[],cycles=new Map(),recentWords=[],figureRecent=[];
+ const r=seeded(seed),tasks=[],cycles=new Map(),recentWords=[],figureRecent=[],contentSeen=new Map(),contentRecent=new Map();
  let figurePool=[];
  for(let i=0;i<count;i++){
   const kind=pool[i%pool.length],taskSeed=integer(r,2**30)+i;
@@ -624,7 +661,43 @@ export function generateBundle({age="5-6",theme="clouds",count=7,seed=20261107,f
    figureRecent.push(selectedFigure);
    if(figureRecent.length>3)figureRecent.shift();
   }
-  tasks.push(makeTask(kind,age,theme,taskSeed,selectedWord,selectedFigure));
+  let task=makeTask(kind,age,theme,taskSeed,selectedWord,selectedFigure);
+  // Слова и фигуры уже расходуются отдельными циклами; остальным типам
+  // подбираем новые СОДЕРЖАТЕЛЬНЫЕ задания, а не только другой seed.
+  if(kind!=="word"&&kind!=="syllables"&&kind!=="tangram"&&kind!=="story"){
+   const cap=finiteVariety(kind,theme,resolveAge(age));
+   let used=contentSeen.get(kind);
+   if(!used){used=new Set();contentSeen.set(kind,used);}
+   if(cap!==null&&used.size>=cap)used.clear();
+   const recent=contentRecent.get(kind)||[];
+   let attempts=0;
+   while(attempts<250){
+    const key=contentKey(task);
+    if(!used.has(key)&&(cap===null||!recent.includes(key)))break;
+    task=makeTask(kind,age,theme,integer(r,2**30)+i+attempts);
+    attempts++;
+   }
+   let key=contentKey(task);
+   if(used.has(key)||cap!==null&&recent.includes(key)){
+    // Не выпускаем дубликат там, где уникальность математически достижима.
+    // Для ограниченного словаря не прерываем комплект: по окончании цикла
+    // приоритет имеет отсутствие недавнего повтора.
+    if(cap===null)throw new Error("Не удалось сгенерировать 20 различных заданий типа "+kind);
+    let best=task,bestScore=-1;
+    for(let tries=0;tries<160;tries++){
+     const candidate=makeTask(kind,age,theme,integer(r,2**30)+i+tries+251);
+     const k=contentKey(candidate);
+     const score=(used.has(k)?0:10)+(recent.includes(k)?0:5);
+     if(score>bestScore){best=candidate;bestScore=score;}
+     if(score===15)break;
+    }
+    task=best;key=contentKey(task);
+   }
+   used.add(key);
+   const nextRecent=[...recent,key].slice(-3);
+   contentRecent.set(kind,nextRecent);
+  }
+  tasks.push(task);
  }
  if(!tasks.every(validateTask))throw new Error("Автопроверка заданий не пройдена");
  return {schema:"chudolet.bundle.v1",title:"Приключение: "+(THEMES[theme]?.name||THEMES.clouds.name),age,theme,count,seed,focus,created:"",tasks};
