@@ -687,7 +687,7 @@ function openQaDeepLink(){
  try{state.bundle=generateBundle({theme,age,focus:"type:"+kind,count:20,seed});}
  catch{return false;}
  state.index=index;state.done.clear();reset();
- document.body.classList.add("qa-embed");
+ if(params.get("full")!=="1")document.body.classList.add("qa-embed");
  return true;
 }
 populateAllMechanics();
