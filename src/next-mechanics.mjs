@@ -25,11 +25,13 @@ const COMPOSITIONS=Object.freeze({
   ["right-fin","diamond",284,248,.68,"#a4e5c1",90]
  ],
  robot:[
-  ["body","square",200,202,1.55,"#b5d6f6",0],
-  ["head","rounded-square",200,78,.95,"#ffdb94",0],
-  ["eye","circle",230,78,.45,"#aa83d5",0],
-  ["arm","rectangle",110,202,.83,"#f2b3b4",0],
-  ["antenna","diamond",200,21,.5,"#9ddbba",0]
+  // Пять узнаваемых по форме деталей: голова, туловище, две разные руки, двойные ботинки.
+  // Глаза и рот — гравировка, а не отдельные фишки для угадывания по цвету.
+  ["head","robot-head",200,69,1,"#a9dcf6",0],
+  ["body","robot-chest",200,197,1,"#bfa9eb",0],
+  ["left-arm","robot-claw",94,190,1,"#f3bc88",0],
+  ["right-arm","robot-gripper",306,190,1,"#a9d9c7",0],
+  ["feet","robot-feet",200,281,1,"#f0bf91",0]
  ],
  ship:[
   ["hull","trapezoid",200,260,1.4,"#c5a3ef",180],
@@ -97,6 +99,12 @@ const SHAPES={
  'thin-rectangle':'<rect x="-13" y="-50" width="26" height="100" rx="3"/>',
  'rounded-square':'<rect x="-40" y="-40" width="80" height="80" rx="23"/>',
  pennant:'<polygon points="-47,-34 44,-34 21,0 44,34 -47,34"/>',
+ // Модульный робот: контуры пяти крупных деталей действительно различаются.
+ 'robot-head':'<path d="M-48 -38 H-25 V-49 H-9 V-38 H24 V-53 H39 V-38 H48 Q60 -38 60 -24 V29 Q60 44 46 44 H-46 Q-60 44 -60 29 V-24 Q-60 -38 -48 -38Z"/>',
+ 'robot-chest':'<path d="M-52 -55 H52 L64 -32 L56 51 Q56 59 47 59 H-47 Q-56 59 -56 51 L-64 -32Z"/>',
+ 'robot-claw':'<path d="M-17 -51 H18 V9 L32 19 L39 37 L26 49 L2 32 L-20 50 L-39 38 L-18 10Z"/>',
+ 'robot-gripper':'<path d="M-14 -50 H14 V5 Q42 12 42 34 Q41 53 17 54 Q-11 53 -14 33 Q-16 18 -3 8Z"/>',
+ 'robot-feet':'<path d="M-45 -36 H-11 V5 H10 V-36 H45 L50 16 L63 28 V43 H8 V29 H-8 V43 H-63 V28 L-50 16Z"/>',
  triangle:'<polygon points="0,-50 49,41 -49,41"/>',
  circle:'<circle r="41"/>',
  diamond:'<polygon points="0,-53 44,0 0,53 -44,0"/>',
@@ -108,6 +116,13 @@ function shapeItem(part,fill,stroke="#7256a0",strokeWidth=3){
 export function tangramSvg(task,placed=null,{small=false}={}){
  const done=Array.isArray(placed)?placed:task.answer;
  let shapes='';
+ if(task.figure==="robot"){
+  // Соединители не являются выбираемыми деталями и не зависят от правильности ответа.
+  shapes+='<g class="robot-joints" fill="#f1eef9" stroke="#9887b5" stroke-width="3">'+
+   '<rect x="186" y="105" width="28" height="41" rx="6"/>'+
+   '<rect x="113" y="164" width="37" height="18" rx="7"/>'+
+   '<rect x="249" y="164" width="39" height="18" rx="7"/></g>';
+ }
  for(let i=0;i<task.parts.length;i++){
   const part=task.parts[i];
   shapes+=shapeItem(part,"#ede6f8","#bcaecf",3);
@@ -116,11 +131,23 @@ export function tangramSvg(task,placed=null,{small=false}={}){
    if(selected)shapes+=shapeItem({...selected,x:part.x,y:part.y,scale:part.scale},selected.color,"#604a85",2);
   }
  }
+ if(task.figure==="robot"){
+  // Дружелюбная мордочка и экран на груди улучшают узнаваемость даже без цвета.
+  // Они одинаковы на пустом шаблоне и при любой расстановке, поэтому не выдают ответ.
+  shapes+='<g class="robot-face" stroke="#6f5c96" stroke-width="3" fill="none" stroke-linecap="round">'+
+   '<circle cx="177" cy="63" r="9" fill="#fff"/><circle cx="218" cy="63" r="9" fill="#fff"/>'+
+   '<circle cx="178" cy="64" r="3" fill="#664b93" stroke="none"/><circle cx="219" cy="64" r="3" fill="#664b93" stroke="none"/>'+
+   '<path d="M184 88 Q200 101 216 88"/>'+
+   '<rect x="162" y="175" width="76" height="48" rx="9" fill="#fff" fill-opacity=".54"/>'+
+   '<circle cx="176" cy="198" r="5" fill="#36c3d6" stroke="none"/>'+
+   '<path d="M192 198 H222"/>'+
+   '</g>';
+ }
  // Метки находятся ВНУТРИ контуров и прорисовываются поверх любой поставленной детали.
  const anchors={
   house:{body:[254,218],roof:[200,90],door:[215,245],window:[165,190],chimney:[260,70]},
   rocket:{body:[200,241],tip:[200,60],window:[200,170]},
-  robot:{body:[200,244],head:[172,78],eye:[230,78]},
+  robot:{head:[241,90],body:[243,236],"left-arm":[94,194],"right-arm":[306,194],feet:[200,290]},
   ship:{hull:[149,271],porthole:[200,270]},
   tree:{crown:[199,102]},
   flower:{blossom:[200,97]},

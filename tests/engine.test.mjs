@@ -394,3 +394,22 @@ test("Конструктор: до исчерпания 8 силуэтов не 
   assert.ok(b.tasks.every(validateTask));
  }
 });
+
+test("Робот: голова, корпус, две руки и ноги, пять разных контуров, видимые номера и лицо",()=>{
+ for(const age of ["5-6","7-9","10-12"])for(let seed=0;seed<30;seed++){
+  const task=makeTask("tangram",age,"clouds",seed);
+  if(task.figure!=="robot")continue;
+  assert.deepEqual(task.parts.map(x=>x.id),["head","body","left-arm","right-arm","feet"]);
+  assert.equal(new Set(task.parts.map(x=>x.shape)).size,5);
+  assert.ok(task.parts.every(x=>x.shape.startsWith("robot-")));
+  const unfilled=tangramSvg(task,Array(5).fill(null));
+  const full=tangramSvg(task,task.answer);
+  assert.match(unfilled,/class="robot-face"/);
+  assert.match(unfilled,/class="robot-joints"/);
+  assert.match(full,/class="tangram-slot-number"/);
+  assert.equal((full.match(/class="tangram-slot-number"/g)||[]).length,5);
+  assert.ok(full.indexOf('class="robot-face"')<full.indexOf('class="tangram-slot-number"'));
+  assert.equal(validateTask(task),true);
+  assert.equal(checkAnswer(task,task.answer),true);
+ }
+});
