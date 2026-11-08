@@ -279,3 +279,61 @@ button.picture-slot,button.picture-piece{cursor:pointer}
  .print-task .pack-conditions{background:#fff;border:1px solid #bbb}
  .print-task .pack-pip{background:#aaa;border:1px solid #555}
 }
+
+/* v0.2: геометрический конструктор, математическая дорожка и магазин. */
+.tangram-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(155px,.8fr);gap:15px;align-items:start;max-width:810px;margin:9px auto 14px}
+.tangram-stage{border:2px solid #e1d3ef;border-radius:17px;background:#fffef7;padding:7px;min-width:0}
+.tangram-art{width:100%;max-height:370px;display:block}
+.tangram-slots{display:grid;gap:7px}
+.tangram-slot{display:flex;align-items:center;gap:9px;min-width:0;min-height:55px;border:2px solid #d8c7ef;background:#fff;border-radius:12px;color:#5b4481;padding:6px 10px;font-size:13px;text-align:left}
+button.tangram-slot{cursor:pointer}.tangram-slot b{font-size:19px}
+.tangram-slot.active{border-color:#6a34b8;background:#f1e7ff}
+.tangram-slot.filled{background:#f6f9ee}
+.tangram-mini{display:inline-flex;width:38px;height:38px}
+.tangram-mini .tangram-piece-art{width:100%;height:100%}
+.tangram-tray{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:800px;margin:12px auto}
+.tangram-tray-item{width:95px;height:94px;display:flex;align-items:center;justify-content:center;padding:7px;border:2px solid #d4bfe8;background:#fff;border-radius:16px;cursor:pointer}
+.tangram-tray-item.used{opacity:.28;cursor:default}
+.tangram-piece-art{width:100%;height:100%;overflow:visible}
+.mathpath-board{max-width:640px;margin:10px auto}
+.mathpath-start{text-align:center;margin:0 auto 16px;background:#f7e7ff;border:2px solid #dec6f6;border-radius:16px;padding:11px 20px;width:max-content;max-width:100%;font-size:18px}
+.mathpath-start b{font-size:30px;color:#6a34b8;margin-left:8px}
+.mathpath-steps{display:grid;gap:12px}
+.mathpath-step{display:grid;grid-template-columns:minmax(100px,135px) 1fr;gap:12px;align-items:center}
+.mathpath-operation{display:flex;align-items:center;gap:8px;font-size:24px;font-weight:800;color:#603a93;white-space:nowrap}
+.mathpath-stepno{display:inline-grid;place-items:center;border-radius:50%;background:#d3ebfa;width:32px;height:32px;font-size:14px}
+.mathpath-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.mathpath-choice{min-width:0;min-height:62px;display:grid;place-items:center;border:2px solid #d9c8eb;border-radius:14px;background:#fff;font-size:27px;font-weight:850;color:#4f367a;cursor:pointer}
+.mathpath-choice.selected{background:#ebdcff;border-color:#6a34b8;box-shadow:inset 0 0 0 1px #6a34b8}
+.shop-budget{max-width:570px;margin:12px auto 21px;border:2px solid #dec6f2;border-radius:20px;padding:16px;text-align:center;background:#fffaf0;display:grid;gap:5px}
+.shop-budget>span{font-size:14px;color:#75518e}.shop-budget strong{font-size:38px;color:#6842a0}.shop-budget small{font-size:13px;color:#766b84}
+.shop-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;max-width:660px;margin:15px auto 20px}
+.shop-item{min-width:0;min-height:155px;padding:13px 7px 10px;border:2px solid #e0d2ef;border-radius:18px;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer}
+.shop-item.selected{background:#f0e6ff;border-color:#6a34b8}
+.shop-emoji{font-size:61px;line-height:1}.shop-price{font-size:20px;font-weight:850;color:#5b377c}.shop-checkbox{font-size:24px;font-weight:850;color:#6841a7}
+@media(max-width:760px){
+ .tangram-layout{grid-template-columns:1fr}.tangram-stage{max-width:440px;width:100%;margin:auto}
+ .tangram-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .tangram-tray-item{width:clamp(60px,17vw,88px);height:clamp(60px,17vw,88px)}
+ .mathpath-step{grid-template-columns:83px 1fr;gap:5px}
+ .mathpath-operation{font-size:21px;gap:4px}.mathpath-stepno{width:26px;height:26px;font-size:12px}
+ .mathpath-choice{min-height:56px;font-size:24px}
+ .shop-item{min-height:125px}.shop-emoji{font-size:clamp(42px,9vw,55px)}.shop-price{font-size:17px}
+}
+@media(max-width:420px){
+ .tangram-slots{grid-template-columns:1fr}
+ .shop-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .mathpath-step{grid-template-columns:75px 1fr}.mathpath-choice{min-height:49px;font-size:20px}
+ .mathpath-operation{font-size:18px}
+}
+@media print{
+ .print-task .tangram-layout{grid-template-columns:1fr;gap:3mm}
+ .print-task .tangram-stage{width:112mm;margin:auto}
+ .print-task .tangram-slots{display:none}
+ .print-task .tangram-tray-item{border:1px dashed #777;width:19mm;height:19mm}
+ .print-task .mathpath-start{font-size:16pt}
+ .print-task .mathpath-choice{font-size:20pt;min-height:13mm;border:1px solid #999}
+ .print-task .shop-grid{gap:2mm}.print-task .shop-item{min-height:26mm;border:1px solid #aaa}
+ .print-task .shop-emoji{font-size:27pt}.print-task .shop-price{font-size:12pt}
+ .print-task .shop-budget{padding:2mm;background:#fff}
+}
