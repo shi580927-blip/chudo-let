@@ -254,3 +254,55 @@ test("Полный набор числовых заданий не показы�
  assert.match(el("validationBadge").textContent,/все 20 задания разные/);
  assert.doesNotMatch(el("validationBadge").textContent,/повторов/);
 });
+
+test("Закончи фразу: выбор одного ответа",()=>{
+ const t=setup("type:phrase","5-6");
+ assert.match(el("activity").innerHTML,/phrase-sentence/);
+ click({action:"pick",value:t.answer});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});
+test("Детектив: пересечение двух улик, нет раскрытого ответа",()=>{
+ const t=setup("type:detective","7-9");
+ assert.match(el("activity").innerHTML,/detective-clues/);
+ assert.match(el("activity").innerHTML,/detective-suspect/);
+ click({action:"pick",value:t.answer});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});
+test("Приключение: неверная развилка не пропускает дальше, три правильные завершают путь",()=>{
+ const t=setup("type:branching","7-9");
+ assert.match(el("activity").innerHTML,/Этап 1 из 3/);
+ click({action:"branchChoose",step:"0",choice:String(1-t.steps[0].correctIndex)});
+ assert.match(el("activity").innerHTML,/Так история не продвинется/);
+ assert.match(el("activity").innerHTML,/Этап 1 из 3/);
+ for(let i=0;i<3;i++)click({action:"branchChoose",step:String(i),choice:String(t.steps[i].correctIndex)});
+ assert.match(el("activity").innerHTML,/Путь пройден!/);
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});
+test("Командная миссия: карточки закрыты, код из 3 цифр и неполный ответ",()=>{
+ const t=setup("type:team","7-9");
+ assert.match(el("activity").innerHTML,/Личная карточка участника закрыта/);
+ click({action:"teamReveal",role:"0"});
+ assert.match(el("activity").innerHTML,/Сосчитай значки/);
+ click({action:"teamDigit",value:t.answer[0]});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Соберите все три цифры/);
+ for(const d of t.answer.slice(1))click({action:"teamDigit",value:d});
+ click({action:"check"});
+ assert.match(el("activity").innerHTML,/Верно! Отличная работа/);
+});
+test("Новые игры имеют пригодные для А4 незаполненные карточки",()=>{
+ setup("type:branching","7-9");
+ globalThis.requestAnimationFrame=cb=>cb();globalThis.window={print(){}};
+ el("printBtn").handlers.click();
+ let page=el("printRoot").innerHTML.split('<section class="answer-heading">')[0];
+ assert.match(page,/Этап 3 из 3/);
+ assert.doesNotMatch(page,/branch-error/);
+ setup("type:team","7-9");
+ el("printBtn").handlers.click();
+ page=el("printRoot").innerHTML.split('<section class="answer-heading">')[0];
+ assert.match(page,/Личная карточка|Сосчитай значки/);
+ assert.match(page,/Секретный код/);
+});

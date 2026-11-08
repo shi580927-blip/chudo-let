@@ -4,12 +4,12 @@ import {readFileSync,existsSync} from "node:fs";
 import {ART_ASSETS,renderSymbol,artAssetPath} from "../src/artwork.mjs";
 import {THEMES,generateBundle,validateTask} from "../src/engine.mjs";
 
-test("Все 12 предметов Облачной почты привязаны к отдельным SVG",()=>{
+test("Первые двенадцать иллюстраций сохранены, расширение до 24 предметов не зависит от SVG",()=>{
  const all=[...THEMES.clouds.a,...THEMES.clouds.b];
- assert.equal(all.length,12);
- assert.equal(new Set(all).size,12);
+ assert.equal(all.length,24);
+ assert.equal(new Set(all).size,24);
  assert.equal(Object.keys(ART_ASSETS.clouds).length,12);
- for(const symbol of all){
+ for(const symbol of Object.keys(ART_ASSETS.clouds)){
   const path=artAssetPath(symbol,"clouds");
   assert.ok(path);
   const svgFile=new URL("../"+path.replace("./",""),import.meta.url);

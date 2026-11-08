@@ -4,7 +4,7 @@ import {CATALOG,READY_IDS,THEMES,makeTask,validateTask,generateBundle,solveMaze,
 import {WORD_BANK} from "../src/words.mjs";
 import {shopSolutions,tangramSvg,tangramPieceSvg,FIGURE_IDS} from "../src/next-mechanics.mjs";
 import {backpackSolutions,mirrorRight} from "../src/spatial.mjs";
-test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,26);});
+test("В каталоге ровно 30 различных заданий",()=>{assert.equal(CATALOG.length,30);assert.equal(new Set(CATALOG.map(x=>x.id)).size,30);assert.equal(READY_IDS.length,30);});
 test("Генераторы всех тем и возрастов гарантированно корректны",()=>{
  for(const theme of Object.keys(THEMES))for(const age of ["3-4","5-6","7-9","10-12"])for(const kind of READY_IDS)for(let seed=0;seed<30;seed++){
   const t=makeTask(kind,age,theme,seed);
@@ -17,7 +17,7 @@ test("Одинаковые параметры порождают одинако�
  const a=generateBundle({seed:42,count:20}),b=generateBundle({seed:42,count:20});
  assert.deepEqual(a,b);
 });
-test("В неготовую механику попасть нельзя",()=>assert.throws(()=>makeTask("detective"),/ещё не готов/));
+test("Неизвестную механику запустить нельзя",()=>assert.throws(()=>makeTask("does-not-exist"),/ещё не готов/));
 test("Ошибочные ответы отбрасываются",()=>{
  const m=makeTask("maze","7-9","clouds",10);assert.equal(checkAnswer(m,[0,m.size*m.size-1]),false);
  const s=makeTask("sort","5-6","forest",15);assert.equal(checkAnswer(s,s.items.map(x=>1-x.group)),false);
@@ -506,10 +506,10 @@ test("20 разных фигур подряд воспроизводятся п�
 });
 
 
-test("Аудит 20 заданий: 19 механик не повторяют содержательное условие",()=>{
+test("Аудит 20 заданий: 30 механик не повторяют содержательное условие",()=>{
  const limited=new Set();
  const abundant=READY_IDS.filter(kind=>!limited.has(kind));
- assert.equal(abundant.length,26);
+ assert.equal(abundant.length,30);
  for(const kind of abundant)for(const theme of Object.keys(THEMES))
  for(const age of ["5-6","7-9","10-12"])for(const seed of [11,42,20261107,90531]){
   if(CATALOG.find(x=>x.id===kind).minAge>Number(age.split("-")[0]))continue;
@@ -523,7 +523,7 @@ test("Аудит 20 заданий: 19 механик не повторяют с
 });
 
 
-test("Все 26 готовых механик: двадцать содержательно различных заданий без повторов",()=>{
+test("Все 30 готовых механик: двадцать содержательно различных заданий без повторов",()=>{
  for(const kind of READY_IDS)for(const theme of Object.keys(THEMES))
  for(const age of ["5-6","7-9","10-12"])for(const seed of [3,29,20261107]){
   if(CATALOG.find(x=>x.id===kind).minAge>Number(age.split("-")[0]))continue;
@@ -650,4 +650,49 @@ test("Бабочка: основания крыльев примыкают к т
  assert.ok(p["right-wing"].x-43<=p.body.x+18);
  assert.ok(p.patterns.y<p["left-wing"].y);
  assert.ok(validateTask(t)&&checkAnswer(t,t.answer));
+});
+
+
+test("Четыре новые механики: однозначная проверка GAME по 6 мирам и возрастам",()=>{
+ const kinds=["phrase","detective","branching","team"];
+ for(const kind of kinds)for(const theme of Object.keys(THEMES))
+ for(const age of ["5-6","7-9","10-12"])for(let seed=0;seed<100;seed++){
+  const puzzle=makeTask(kind,age,theme,seed);
+  assert.equal(validateTask(puzzle),true,JSON.stringify({kind,age,theme,seed}));
+  assert.equal(checkAnswer(puzzle,puzzle.answer),true);
+  if(kind==="phrase"){
+   assert.equal(new Set(puzzle.options).size,4);
+   assert.equal(puzzle.options.filter(x=>x===puzzle.answer).length,1);
+   assert.equal(validateTask({...puzzle,answer:"ошибка"}),false);
+   assert.equal(checkAnswer(puzzle,puzzle.options.find(x=>x!==puzzle.answer)),false);
+  }
+  if(kind==="detective"){
+   assert.equal(puzzle.suspects.length,4);
+   assert.equal(puzzle.suspects.filter(s=>s.itemA===puzzle.clues[0]).length,2);
+   assert.equal(puzzle.suspects.filter(s=>s.itemB===puzzle.clues[1]).length,2);
+   assert.equal(puzzle.suspects.filter(s=>s.itemA===puzzle.clues[0]&&s.itemB===puzzle.clues[1]).length,1);
+   assert.equal(checkAnswer(puzzle,puzzle.suspects.find(s=>s.id!==puzzle.answer).id),false);
+  }
+  if(kind==="branching"){
+   assert.equal(puzzle.steps.length,3);
+   assert.ok(puzzle.steps.every(s=>s.choices.length===2&&s.choices[0].icon===s.choices[1].icon));
+   const wrong=puzzle.answer.slice();wrong[0]=1-wrong[0];
+   assert.equal(checkAnswer(puzzle,wrong),false);
+   assert.equal(validateTask({...puzzle,answer:wrong}),false);
+  }
+  if(kind==="team"){
+   assert.equal(puzzle.answer.length,3);
+   assert.ok(puzzle.clues.every((c,i)=>Number(puzzle.answer[i])===c.digit));
+   assert.equal(checkAnswer(puzzle,puzzle.answer.slice(0,2)),false);
+   assert.equal(validateTask({...puzzle,answer:"1110"}),false);
+  }
+ }
+});
+test("Двадцать разных заданий для каждой новой механики",()=>{
+ for(const kind of ["phrase","detective","branching","team"])for(const theme of Object.keys(THEMES)){
+  const b=generateBundle({focus:"type:"+kind,age:"7-9",theme,seed:20261108,count:20});
+  assert.equal(b.tasks.length,20);
+  assert.equal(new Set(b.tasks.map(contentKey)).size,20);
+  assert.ok(b.tasks.every(validateTask));
+ }
 });
